@@ -1,0 +1,17 @@
+# Archivos de R
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+
+# Directorios generados
+outputs/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.html
+
+# Archivos compilados de R Markdown
+*_files/
+*_cache/

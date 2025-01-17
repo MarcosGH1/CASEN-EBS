@@ -1,0 +1,125 @@
+---
+title: "Análisis del 10% de mayores ingresos en Chile"
+author: "Marcos González, Agustín Rabie"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  dpi = 300
+)
+
+source("setup.R")
+check_data()
+```
+
+Cargar datos
+
+```{r}
+casen <- readRDS(ruta_casen)
+ebs <- read_sav(ruta_ebs)
+
+# Ver qué variables tenemos disponibles
+# print(names(casen))
+# print(names(ebs))
+
+# Calcular deciles y crear variable top10 en CASEN
+casen <- casen %>%
+  mutate(
+    decil = ntile(ytotcorh, 10),
+    top10 = ifelse(decil == 10, 1, 0)
+  ) %>%
+  rename(
+    folio_casen = folio,
+    id_persona_casen = id_persona
+  )
+
+# Realizar el merge manteniendo todas las variables
+merged_data <- merge(
+  casen,  # Mantenemos todas las variables de CASEN
+  ebs %>% select(folio_casen, id_persona_casen, fexp, region),  # Seleccionamos solo las variables necesarias de EBS
+  by = c("folio_casen", "id_persona_casen"),
+  suffixes = c("_casen", "_ebs")  # Para diferenciar variables duplicadas
+)
+
+```
+
+Estadísticas por decil
+```{r}
+stats_deciles <- merged_data %>%
+  group_by(decil) %>%
+  summarise(
+    n = n(),
+    n_expandido = sum(fexp),
+    ingreso_medio = weighted.mean(ytotcorh, fexp, na.rm = TRUE),
+    proporcion_poblacion = sum(fexp)/sum(merged_data$fexp)
+  )
+
+# Formatear y presentar tabla
+stats_deciles %>%
+  kbl(caption = "Estadísticas por decil de ingreso") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Gráfico
+
+```{r}
+# Calcular proporción del ingreso del 10% superior
+total_income_weighted <- sum(merged_data$ytotcorh * merged_data$fexp, na.rm = TRUE)
+top10_income_weighted <- sum(merged_data$ytotcorh[merged_data$top10 == 1] * 
+                           merged_data$fexp[merged_data$top10 == 1], na.rm = TRUE)
+
+# Formatear datos para el gráfico
+stats_deciles$ingreso_medio_miles <- stats_deciles$ingreso_medio/1000
+
+# Crear el gráfico
+p <- ggplot(stats_deciles, aes(x = factor(decil), y = ingreso_medio_miles)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_bar(data = subset(stats_deciles, decil == 10), 
+           aes(x = factor(decil), y = ingreso_medio_miles),
+           fill = "darkred", 
+           stat = "identity") +
+  scale_y_continuous(
+    labels = function(x) format(x, big.mark = ",", scientific = FALSE),
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  labs(
+    title = "Ingreso promedio por decil",
+    subtitle = paste("El 10% superior captura", 
+                    format(round(top10_income_weighted/total_income_weighted*100, 1), 
+                           nsmall = 1),
+                    "por ciento del ingreso total"),
+    x = "Decil",
+    y = "Ingreso promedio (miles de $)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 12),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  )
+
+# Guardar y mostrar el gráfico
+if (!dir.exists("outputs")) dir.create("outputs")
+jpeg(filename = "outputs/grafico_deciles.jpg",
+     width = 10, height = 6, 
+     units = "in", res = 300)
+print(p)
+dev.off()
+
+knitr::include_graphics("outputs/grafico_deciles.jpg")
+```
