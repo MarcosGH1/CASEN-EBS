@@ -2,14 +2,16 @@
 title: "Análisis del 10% de mayores ingresos en Chile"
 author: "Marcos González, Agustín Rabie"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: 
+output:
   html_document:
     theme: flatly
     highlight: tango
     toc: true
     toc_float: true
     code_folding: hide
-    output_file: "index.html"
+    output_file: index.html
+  pdf_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -168,21 +170,77 @@ stats_descriptivos %>%
 
 Análisis por región
 ```{r}
+nombres_regiones <- c(
+  "15" = "Arica y Parinacota",
+  "1" = "Tarapacá",
+  "2" = "Antofagasta",
+  "3" = "Atacama",
+  "4" = "Coquimbo",
+  "5" = "Valparaíso",
+  "13" = "Metropolitana",
+  "6" = "O'Higgins",
+  "7" = "Maule",
+  "8" = "Biobío",
+  "16" = "Ñuble",
+  "9" = "Araucanía",
+  "14" = "Los Ríos",
+  "10" = "Los Lagos",
+  "11" = "Aysén",
+  "12" = "Magallanes"
+)
+
+# Recodificar la variable región manteniendo el orden norte-sur
+merged_data <- merged_data %>%
+  mutate(
+    region_nombre = factor(region,
+                          levels = c("15", "1", "2", "3", "4", "5", "13", "6", 
+                                   "7", "8", "16", "9", "14", "10", "11", "12"),
+                          labels = nombres_regiones[c("15", "1", "2", "3", "4", "5", "13", "6", 
+                                                    "7", "8", "16", "9", "14", "10", "11", "12")],
+                          ordered = TRUE)  # Hacer que sea un factor ordenado
+  )
+
+# Actualizar el análisis por región usando el nuevo orden
 stats_region <- merged_data %>%
-  group_by(region) %>%
+  group_by(region_nombre) %>%
   summarise(
     n = n(),
     prop_elite = weighted.mean(elite, fexp, na.rm = TRUE),
     ingreso_medio = weighted.mean(ytotcorh, fexp, na.rm = TRUE)
   ) %>%
-  arrange(desc(prop_elite))
+  mutate(
+    prop_elite = scales::percent(prop_elite, accuracy = 0.1),
+    ingreso_medio = scales::comma(ingreso_medio, accuracy = 1)
+  )
 
-# Mostrar distribución regional
+# Mostrar tabla ordenada y formateada
 stats_region %>%
-  kbl(caption = "Distribución del 10% superior por región",
-      digits = 3,
-      format.args = list(big.mark = ",")) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kbl(caption = "Distribución del 10% superior por región (ordenado de norte a sur)",
+      col.names = c("Región", "N", "Proporción Elite", "Ingreso Medio"),
+      align = c('l', 'r', 'r', 'r')) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  row_spec(0, bold = TRUE)
+
+# Crear un gráfico de barras que muestre la proporción de elite por región
+ggplot(stats_region, 
+       aes(x = region_nombre, 
+           y = as.numeric(sub("%", "", prop_elite))/100)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +  # Girar el gráfico para mejor visualización
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Proporción del 10% superior por región",
+    subtitle = "Regiones ordenadas de norte a sur",
+    x = "Región",
+    y = "Proporción del 10% superior"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 8),
+    plot.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
 ```
 
 Variables potencialmente predictoras
