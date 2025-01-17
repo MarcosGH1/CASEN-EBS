@@ -9,6 +9,7 @@ output:
     toc: true
     toc_float: true
     code_folding: hide
+    output_file: "index.html"
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +24,13 @@ knitr::opts_chunk$set(
 
 source("setup.R")
 check_data()
+
+library(haven)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(kableExtra)
+library(purrr)
 ```
 
 Cargar datos
@@ -123,3 +131,105 @@ dev.off()
 
 knitr::include_graphics("outputs/grafico_deciles.jpg")
 ```
+
+```{r}
+# Variable dummy para el 10% superior
+merged_data <- merged_data %>%
+  mutate(
+    elite = ifelse(decil == 10, 1, 0),
+    elite_label = factor(ifelse(decil == 10, "10% superior", "Resto"))
+  )
+
+# Análisis descriptivo por grupo
+stats_descriptivos <- merged_data %>%
+  group_by(elite_label) %>%
+  summarise(
+    n = n(),
+    n_expandido = sum(fexp),
+    ingreso_promedio = round(weighted.mean(ytotcorh, fexp, na.rm = TRUE)),
+    desv_est = round(sqrt(weighted.mean((ytotcorh - weighted.mean(ytotcorh, fexp))^2, fexp))),
+    edad_promedio = weighted.mean(edad, fexp, na.rm = TRUE),
+    prop_hombres = weighted.mean(sexo == 1, fexp, na.rm = TRUE),
+    prop_urbano = weighted.mean(zona == 1, fexp, na.rm = TRUE)
+  ) %>%
+  mutate(
+    prop_muestra = n/sum(n),
+    prop_poblacion = n_expandido/sum(n_expandido)
+  )
+
+# Mostrar tabla de estadísticas descriptivas
+stats_descriptivos %>%
+  kbl(caption = "Características del 10% superior vs resto", 
+      digits = 2,
+      format.args = list(big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+Análisis por región
+```{r}
+stats_region <- merged_data %>%
+  group_by(region) %>%
+  summarise(
+    n = n(),
+    prop_elite = weighted.mean(elite, fexp, na.rm = TRUE),
+    ingreso_medio = weighted.mean(ytotcorh, fexp, na.rm = TRUE)
+  ) %>%
+  arrange(desc(prop_elite))
+
+# Mostrar distribución regional
+stats_region %>%
+  kbl(caption = "Distribución del 10% superior por región",
+      digits = 3,
+      format.args = list(big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Variables potencialmente predictoras
+
+```{r}
+# Variables potencialmente predictivas para el modelo
+vars_predictoras <- c(
+  "edad",           # Edad
+  "sexo",          # Sexo
+  "zona",          # Urbano/Rural
+  "region",        # Región
+  "e6a",           # Nivel educacional
+  "v13",           # Tipo de vivienda
+  "v13_propia"     # Tenencia de la vivienda
+)
+
+# Análisis de variables predictoras
+predictoras_stats <- map_df(vars_predictoras, function(var) {
+  if(is.numeric(merged_data[[var]])) {
+    # Para variables numéricas
+    merged_data %>%
+      group_by(elite_label) %>%
+      summarise(
+        media = weighted.mean(get(var), fexp, na.rm = TRUE),
+        desv = sqrt(weighted.mean((get(var) - media)^2, fexp, na.rm = TRUE)),
+        na_prop = mean(is.na(get(var)))
+      ) %>%
+      mutate(variable = var) %>%
+      select(variable, everything())
+  } else {
+    # Para variables categóricas
+    merged_data %>%
+      group_by(elite_label, get(var)) %>%
+      summarise(
+        n = n(),
+        prop = weighted.mean(elite, fexp, na.rm = TRUE)
+      ) %>%
+      mutate(variable = var) %>%
+      select(variable, everything())
+  }
+})
+
+# Mostrar análisis de variables predictoras
+predictoras_stats %>%
+  kbl(caption = "Análisis de variables predictoras potenciales",
+      digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
