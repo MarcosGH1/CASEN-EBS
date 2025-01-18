@@ -3,6 +3,8 @@ title: "Análisis del 10% de mayores ingresos en Chile"
 author: "Marcos González, Agustín Rabie"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  pdf_document:
+    toc: true
   html_document:
     theme: flatly
     highlight: tango
@@ -10,8 +12,6 @@ output:
     toc_float: true
     code_folding: hide
     output_file: index.html
-  pdf_document:
-    toc: true
 ---
 
 Este proyecto analiza la distribución y características del 10% superior de los hogares de mayores ingresos en Chile, utilizando datos de las encuestas CASEN 2020 y EBS 2021. El objetivo es desarrollar un análisis descriptivo detallado y posteriormente un modelo de machine learning que permita predecir la pertenencia a este grupo.
@@ -47,7 +47,8 @@ packages <- c(
   "magrittr", 
   "stringr", 
   "rlang",
-  "DiagrammeR"
+  "DiagrammeR",
+  "webshot2"
 )
 
 for(pkg in packages) {
