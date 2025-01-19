@@ -3,8 +3,6 @@ title: "Análisis del 10% de mayores ingresos en Chile"
 author: "Marcos González, Agustín Rabie"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document:
-    toc: true
   html_document:
     theme: flatly
     highlight: tango
@@ -12,11 +10,25 @@ output:
     toc_float: true
     code_folding: hide
     output_file: index.html
+  pdf_document:
+    toc: true
 ---
 
 Este proyecto analiza la distribución y características del 10% superior de los hogares de mayores ingresos en Chile, utilizando datos de las encuestas CASEN 2020 y EBS 2021. El objetivo es desarrollar un análisis descriptivo detallado y posteriormente un modelo de machine learning que permita predecir la pertenencia a este grupo.
 
-1.Preparación y descripción de los datos
+## Objetivos
+---
+
+### Objetivo General
+Desarrollar y evaluar un modelo de machine learning para predecir la pertenencia al 10% superior de ingresos en Chile utilizando datos socioeconómicos y de bienestar.
+
+### Objetivos Específicos
+- Identificar un conjunto de variables predictoras capaces de predecir la pertenencia al 10% superior de ingresos
+- Evaluar el desempeño predictivo de diferentes algoritmos de machine learning
+- Analizar la importancia relativa de las variables en la predicción
+- Generar recomendaciones basadas en los patrones identificados
+
+##1.Preparación y descripción de los datos
 Para comenzar el análisis, se cargan las bibliotecas necesarias y se establecen los parámetros de configuración. Se utiliza una combinación de paquetes para manipulación de datos (dplyr), visualización (ggplot2), manejo de datos espaciales (sf, geodata, chilemapas) y presentación de resultados (kableExtra).
 
 ```{r setup, include=FALSE}
@@ -48,7 +60,9 @@ packages <- c(
   "stringr", 
   "rlang",
   "DiagrammeR",
-  "webshot2"
+  "webshot2",
+  "tidyr",
+  "naniar"
 )
 
 for(pkg in packages) {
@@ -65,7 +79,7 @@ chile_map <- gadm("CHL", level=1, path=tempdir())
 
 ```
 
-2. Carga y preparación inicial de datos
+##2. Carga y preparación inicial de datos
 El análisis utiliza dos fuentes principales de datos:
 
 CASEN 2020 (versión reducida, en formato rds para poder subirse a GitHub): Proporciona información socioeconómica detallada
@@ -97,33 +111,57 @@ casen <- casen %>%
 
 # Realizar el merge manteniendo todas las variables
 merged_data <- merge(
-  casen,  # Mantenemos todas las variables de CASEN
-  ebs %>% select(folio_casen, id_persona_casen, fexp, region),  # Seleccionamos solo las variables necesarias de EBS
+  casen,  
+  ebs %>% select(
+    folio_casen, id_persona_casen, fexp, region,
+    j3a_1, j3a_4, a3_4, j3a_5,  # Variables de bienestar laboral
+    c1_4, c1_5, c3_2, c6,        # Variables de uso del tiempo
+    l8, l9, l10a, l10b         # Variables para identificar situación laboral
+  ),  
   by = c("folio_casen", "id_persona_casen"),
   suffixes = c("_casen", "_ebs")  # Para diferenciar variables duplicadas
-)
-
+) %>%
+  mutate(
+    elite = ifelse(decil == 10, 1, 0),
+    elite_label = factor(ifelse(decil == 10, "10% superior", "Resto"))
+  )
 ```
 
-3. Modelo Entidad-Relación
+##3. Modelo Entidad-Relación
 La estructura de datos se organiza en cuatro entidades principales:
 
 ```{r}
 DiagrammeR::grViz("
   digraph ER {
-    graph [rankdir = TB, fontname = 'Helvetica']
-    node [shape = rectangle, style = filled, fillcolor = lightblue, fontname = 'Helvetica']
-    edge [fontname = 'Helvetica']
+    # Configuración general del gráfico
+    graph [rankdir = TB, 
+           fontname = 'Helvetica',
+           nodesep = 0.4,
+           ranksep = 0.6]
+           
+    # Configuración de nodos
+    node [shape = rectangle, 
+          style = filled, 
+          fillcolor = lightblue, 
+          fontname = 'Helvetica',
+          fontsize = 10,
+          width = 2,
+          height = 0.5]
+          
+    # Configuración de bordes
+    edge [fontname = 'Helvetica',
+          fontsize = 8,
+          len = 1.2]
 
     # Entidades principales
-    region [label = 'REGIÓN\\n{id_region}\\n(nombre)']
-    hogar [label = 'HOGAR\\n{folio_casen}\\n(ingresos_totales, n_integrantes,\\ntipo_vivienda, tenencia)']
-    individuo [label = 'INDIVIDUO\\n{id_persona_casen}\\n(edad, sexo, elite)']
+    region [label = 'REGIÓN\n{id_region}\n(nombre)', width = 2]
+    hogar [label = 'HOGAR\n{folio_casen}\n(ingresos_totales, n_integrantes,\ntipo_vivienda, tenencia)', width = 3]
+    individuo [label = 'INDIVIDUO\n{id_persona_casen}\n(edad, sexo, elite)', width = 2.5]
 
-    # Atributos del individuo como subentidades
-    educacion [label = 'CARACTERÍSTICAS EDUCATIVAS\\n(nivel, años)']
-    trabajo [label = 'CARACTERÍSTICAS LABORALES\\n(ocupación, categoría, cotización)']
-    bienestar [label = 'BIENESTAR\\n(uso tiempo, satisfacción,\\nredes sociales)']
+    # Atributos como subentidades
+    educacion [label = 'CARACTERÍSTICAS EDUCATIVAS\n(nivel, años)', width = 2.5]
+    trabajo [label = 'CARACTERÍSTICAS LABORALES\n(ocupación, categoría, cotización)', width = 2.5]
+    bienestar [label = 'BIENESTAR\n(uso tiempo, satisfacción,\nredes sociales)', width = 2.5]
 
     # Relaciones
     region -> hogar [label = 'contiene']
@@ -134,18 +172,21 @@ DiagrammeR::grViz("
     individuo -> trabajo [label = 'tiene']
     individuo -> bienestar [label = 'tiene']
 
-    # Alineación
+    # Alineación y espaciado
     {rank = same; educacion; trabajo; bienestar}
     
     # Nota explicativa
-    nota [label = 'Variable objetivo:\\nelite (1: pertenece al 10% superior, 0: resto)', 
-          shape = note, fillcolor = lightyellow]
+    nota [label = 'Variable objetivo:\nelite (1: pertenece al 10% superior, 0: resto)', 
+          shape = note, 
+          fillcolor = lightyellow,
+          width = 3]
     nota -> hogar [style = dashed]
   }
-")
+", 
+width = 800, height = 500)
 ```
 
-4. Análisis descriptivo inicial
+##4. Análisis descriptivo inicial
 Para comprender la distribución de ingresos en Chile, comenzamos examinando las estadísticas básicas por decil. Esto nos permite contextualizar el 10% superior dentro de la distribución general de ingresos del país.
 
 ```{r}
@@ -158,15 +199,25 @@ stats_deciles <- merged_data %>%
     proporcion_poblacion = sum(fexp)/sum(merged_data$fexp)
   )
 
-# Formatear y presentar tabla
-stats_deciles %>%
-  kbl(caption = "Estadísticas por decil de ingreso") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+# Visualizar patrones de valores faltantes
+vars_of_interest <- c("edad", "sexo", "zona", "region", "educ_rec", "tenencia_vivienda", 
+                     "ytotcorh", "elite", "fexp")
+
+gg_miss_var(merged_data[vars_of_interest]) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 8),
+    plot.title = element_text(size = 12)
+  ) +
+  labs(title = "Patrón de valores faltantes en variables principales",
+       x = "Número de valores faltantes",
+       y = "Variables")
+
 ```
 
 Tenemos, para nuestro caso positivo, 974 casos de una muestra de 10921, sin NAs, esto es, alrededor de un 9% de la muestra, lo que se considera suficiente para informar un modelo de Machine Learning.
 
-5. Visualización de la distribución por deciles
+##5. Visualización de la distribución por deciles
 El gráfico siguiente muestra la marcada desigualdad en la distribución de ingresos en Chile. Se destaca el porcentaje del ingreso total que captura ese 10%.
 
 ```{r}
@@ -216,9 +267,31 @@ print(p)
 dev.off()
 
 knitr::include_graphics("outputs/grafico_deciles.jpg")
+
+```{r descriptive_tables}
+# Función para crear tablas combinadas
+create_combined_table <- function(data, group_var, value_vars) {
+  data %>%
+    group_by(!!sym(group_var)) %>%
+    summarise(across(
+      all_of(value_vars),
+      list(
+        mean = ~mean(., na.rm = TRUE),
+        sd = ~sd(., na.rm = TRUE),
+        na = ~mean(is.na(.))
+      )
+    )) %>%
+    mutate(across(
+      ends_with("_mean"),
+      ~paste0(round(., 2), " (", round(get(str_replace(cur_column(), "_mean", "_sd")), 2), ")")
+    )) %>%
+    select(-ends_with("_sd"))
+}
+
+
 ```
 
-6. Caracterización del 10% superior vs resto de la población
+##6. Caracterización del 10% superior vs resto de la población
 La tabla siguiente compara características clave entre este grupo y el resto de la población. Se incluyen variables territoriales (región, urbano/rural), demográficas (edad, sexo), socioeconómicas (educación) y de bienestar. Los valores están ponderados usando los factores de expansión provistos por la EBS: seleccionamos éstos en vez de los de CASEN por tratarse de una encuesta bifásica.
 
 ```{r}
@@ -254,7 +327,7 @@ stats_descriptivos %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-7. Análisis territorial
+##7. Análisis territorial
 El análisis territorial se desarrolla en dos dimensiones complementarias:
 
 Proporción interna: Qué porcentaje de la población de cada región pertenece al 10% superior
@@ -361,7 +434,7 @@ p2
 ```
 Los gráficos resultantes revelan patrones interesantes. La proporción de elite dentro de cada región (gráfico azul) muestra una concentración en ciertas áreas. La distribución del total de la elite (gráfico rojo) evidencia una fuerte centralización
 
-8. Visualización espacial 
+##8. Visualización espacial 
 Aquí generamos mapas que permiten una visualización más intuitiva de los patrones espaciales. Se utilizan dos mapas que corresponden a las mismas dimensiones analizadas en los gráficos de barras:
 
 El primer mapa muestra la proporción de habitantes de cada región que pertenece al 10% superior. Este mapa ayuda a identificar dónde es más probable encontrar miembros de la elite económica.
@@ -463,15 +536,11 @@ m1
 m2
 ```
 
-9. Sexo jefe/a de hogar
+##9. Sexo jefe/a de hogar
 
 Recodificación para identificar sexo de jefe de hogar. No es posible saberlo para el 100% de los casos, pero con variables de sexo y de relación de quien responde con jefe/a de hogar, se puede reducir para cerca del 70% de los casos.
 
 ```{r}
-# Primero veamos la distribución de parentesco
-print("Distribución de parentesco en la muestra:")
-table(merged_data$pco1, useNA = "ifany")
-
 # Deducir sexo del jefe de hogar
 merged_data <- merged_data %>%
   group_by(folio_casen) %>%
@@ -496,17 +565,36 @@ merged_data_jh <- merged_data %>%
 Sexo del/la jefe de hogar
 
 ```{r}
-# Verificar variable de parentesco y filtrar por jefes de hogar
-print("Distribución de parentesco en la muestra:")
-table(merged_data$pco1, useNA = "ifany")
+# Variable de parentesco y filtrar por jefes de hogar
+# Definir etiquetas de parentesco
+etiquetas_parentesco <- c(
+  "1" = "Jefe(a) de Hogar",
+  "2" = "Esposo(a) o pareja de distinto sexo",
+  "3" = "Esposo(a) o pareja de igual sexo", 
+  "4" = "Hijo(a) de ambos",
+  "5" = "Hijo(a) sólo del jefe(a)",
+  "6" = "Hijo(a) sólo del esposo(a)/pareja",
+  "7" = "Padre o madre",
+  "8" = "Suegro(a)",
+  "9" = "Yerno o nuera",
+  "10" = "Nieto(a)",
+  "11" = "Hermano(a)",
+  "12" = "Cuñado(a)",
+  "13" = "Otro Familiar",
+  "14" = "No familiar"
+)
+
+# Crear y mostrar tabla de parentesco
+tab_parentesco <- table(merged_data$pco1, useNA = "ifany")
+names(tab_parentesco) <- etiquetas_parentesco[names(tab_parentesco)]
+kbl(tab_parentesco, 
+    caption = "Distribución de parentesco",
+    col.names = c("Parentesco", "Frecuencia")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 
 # Filtrar solo jefes de hogar
 merged_data_jh <- merged_data %>%
   filter(pco1 == 1)  # Asumiendo que 1 es el código para jefe de hogar
-
-# Verificar el filtro
-print("\nNúmero de hogares (debería coincidir con jefes):")
-length(unique(merged_data_jh$folio_casen))
 
 # Recodificación de sexo para jefes de hogar
 merged_data_jh <- merged_data_jh %>%
@@ -517,7 +605,7 @@ merged_data_jh <- merged_data_jh %>%
       TRUE ~ NA_real_
     ))
 
-# Tabla de distribución
+# Tabla de distribución por sexo
 tabla_sexo <- merged_data_jh %>%
   group_by(sexo_rec) %>%
   summarise(
@@ -533,7 +621,7 @@ tabla_sexo <- merged_data_jh %>%
                      labels = c("Mujer", "Hombre"))
   )
 
-# Mostrar tabla
+# Mostrar tabla de sexo
 tabla_sexo %>%
   kbl(caption = "Distribución y proporción de elite por sexo del jefe de hogar",
       col.names = c("Sexo", "N", "N expandido", "Proporción elite", 
@@ -542,10 +630,10 @@ tabla_sexo %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-Edad
+##10. Edad
 
 ```{r}
-# Recodificación de edad para jefes de hogar
+# Tabla de edad
 merged_data_jh <- merged_data_jh %>%
   mutate(
     edad_rec = case_when(
@@ -570,7 +658,6 @@ merged_data_jh <- merged_data_jh %>%
                                          "75-79", "80 o más"))
   )
 
-# Tabla de distribución
 tabla_edad <- merged_data_jh %>%
   group_by(edad_rec) %>%
   summarise(
@@ -584,18 +671,18 @@ tabla_edad <- merged_data_jh %>%
     prop_elite = scales::percent(prop_elite, accuracy = 0.1)
   )
 
-# Mostrar tabla
 tabla_edad %>%
   kbl(caption = "Distribución y proporción de elite por grupo de edad",
-      col.names = c("Grupo de edad", "N", "N expandido", "Proporción elite", 
+      col.names = c("Grupo de edad", "N", "N expandido", "Proporción elite (ponderada)", 
                    "Proporción muestra", "Proporción población"),
       digits = c(0,0,0,1,3,3)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-10. Nivel educacional
+##11. Nivel educacional
 
 ```{r}
+# Tabla de nivel educacional
 merged_data <- merged_data %>%
   mutate(
     educ_rec = case_when(
@@ -605,7 +692,7 @@ merged_data <- merged_data %>%
       e6a %in% c(14, 15) ~ "Universitaria",
       e6a %in% c(16, 17) ~ "Postgrado",
       is.na(e6a) ~ NA_character_,
-      TRUE ~ "Otra"  # Para capturar cualquier código no considerado
+      TRUE ~ "Otra"
     ))
 
 tabla_educ <- merged_data %>%
@@ -623,66 +710,246 @@ tabla_educ <- merged_data %>%
 
 tabla_educ %>%
   kbl(caption = "Distribución y proporción de elite por nivel educacional",
-      col.names = c("Nivel educacional", "N", "N expandido", "Proporción elite", 
+      col.names = c("Nivel educacional", "N", "N expandido", "Proporción elite (ponderada)", 
                    "Proporción muestra", "Proporción población"),
       digits = c(0,0,0,1,3,3)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 
-Variables de bienestar:
-
-
-Resumen variables potencialmente predictoras
+##11. Resumen variables potencialmente predictoras
 Para preparar la fase de modelamiento, se realiza un análisis exploratorio de las variables que podrían predecir la pertenencia al 10% superior. El análisis de estas variables se realiza considerando:
 
 Su distribución diferenciada entre elite y no elite
 La presencia de valores faltantes que podrían afectar el modelamiento
 La necesidad de transformaciones o recodificaciones para su uso en modelos predictivos
 
+
 ```{r}
-# Variables potencialmente predictivas para el modelo
-vars_predictoras <- c(
-  "edad",           # Edad
-  "sexo",          # Sexo
-  "zona",          # Urbano/Rural
-  "region",        # Región
-  "e6a",           # Nivel educacional
-  "v13",           # Tipo de vivienda
-  "v13_propia"     # Tenencia de la vivienda
-)
+# Creación de variable combinada de tenencia de vivienda
+# Creación de variable combinada de tenencia de vivienda
+merged_data <- merged_data %>%
+  mutate(
+    tenencia_vivienda = case_when(
+      v13 == 1 & v13_propia == 1 ~ "Propia pagada",
+      v13 == 1 & v13_propia == 2 ~ "Propia pagándose",
+      v13 == 1 & v13_propia == 3 ~ "Propia compartida (pagada)",
+      v13 == 1 & v13_propia == 4 ~ "Propia compartida (pagándose)",
+      v13 == 2 ~ "Arrendada",
+      v13 == 3 ~ "Cedida",
+      v13 == 9 ~ "Usufructo",
+      v13 == 10 ~ "Ocupación irregular",
+      v13 == 11 ~ "Poseedor irregular",
+      TRUE ~ "Sin información"
+    ) %>%
+      factor(levels = c(
+        "Propia pagada",
+        "Propia pagándose",
+        "Propia compartida (pagada)",
+        "Propia compartida (pagándose)",
+        "Arrendada",
+        "Cedida",
+        "Usufructo",
+        "Ocupación irregular",
+        "Poseedor irregular",
+        "Sin información"
+      ))
+  )
 
-# Análisis de variables predictoras
-predictoras_stats <- map_df(vars_predictoras, function(var) {
-  if(is.numeric(merged_data[[var]])) {
-    # Para variables numéricas
-    merged_data %>%
-      group_by(elite_label) %>%
-      summarise(
-        media = weighted.mean(get(var), fexp, na.rm = TRUE),
-        desv = sqrt(weighted.mean((get(var) - media)^2, fexp, na.rm = TRUE)),
-        na_prop = mean(is.na(get(var)))
-      ) %>%
-      mutate(variable = var) %>%
-      select(variable, everything())
-  } else {
-    # Para variables categóricas
-    merged_data %>%
-      group_by(elite_label, get(var)) %>%
-      summarise(
-        n = n(),
-        prop = weighted.mean(elite, fexp, na.rm = TRUE)
-      ) %>%
-      mutate(variable = var) %>%
-      select(variable, everything())
-  }
-})
+# Tabla de distribución
+tabla_tenencia <- merged_data %>%
+  group_by(tenencia_vivienda) %>%
+  summarise(
+    n = n(),
+    n_expandido = sum(fexp),
+    prop_elite = weighted.mean(elite, fexp, na.rm = TRUE)
+  ) %>%
+  mutate(
+    prop_muestra = n/sum(n),
+    prop_poblacion = n_expandido/sum(n_expandido),
+    prop_elite = scales::percent(prop_elite, accuracy = 0.1)
+  )
 
-# Mostrar análisis de variables predictoras
-predictoras_stats %>%
-  kbl(caption = "Análisis de variables predictoras potenciales",
-      digits = 3) %>%
+# Mostrar tabla de tenencia
+tabla_tenencia %>%
+  kbl(caption = "Distribución y proporción de elite por tenencia de vivienda",
+      col.names = c("Tenencia", "N", "N expandido", "Proporción elite (ponderada)", 
+                   "Proporción muestra", "Proporción población"),
+      digits = c(0,0,0,1,3,3)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+Variables potenciales
+
+```{r}
+stats_edad <- merged_data %>%
+  group_by(elite_label) %>%
+  summarise(
+    N = n(),
+    Media = weighted.mean(edad, fexp, na.rm = TRUE),
+    DE = sd(edad, na.rm = TRUE),
+    `NA's (%)` = scales::percent(mean(is.na(edad)))
+  )
+
+# Mostrar tabla de edad
+stats_edad %>%
+  kbl(caption = "Estadísticas de edad por grupo",
+      digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Variables categóricas
+# Función helper para crear tablas de variables categóricas
+crear_tabla_categoria <- function(data, var, var_label) {
+  data %>%
+    group_by(!!sym(var)) %>%
+    summarise(
+      `N sin ponderar` = n(),
+      `N ponderado` = sum(fexp),
+      `N elite` = sum(elite),
+      `% del total` = scales::percent(n()/nrow(data), 0.1),
+      `% Elite (ponderado)` = scales::percent(weighted.mean(elite, fexp, na.rm = TRUE), 0.1),
+      `NA's (%)` = scales::percent(mean(is.na(!!sym(var))))
+    ) %>%
+    arrange(desc(`N sin ponderar`))
+}
+
+# Sexo
+tabla_sexo <- crear_tabla_categoria(
+  merged_data %>% 
+    mutate(sexo = factor(sexo, levels = c(1, 2),
+                        labels = c("Hombre", "Mujer"))),
+  "sexo", "Sexo"
+)
+
+# Mostrar tabla de sexo
+tabla_sexo %>%
+  kbl(caption = "Distribución por sexo") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Zona
+tabla_zona <- crear_tabla_categoria(
+  merged_data %>% 
+    mutate(zona = factor(zona, levels = c(1, 2),
+                        labels = c("Urbana", "Rural"))),
+  "zona", "Zona"
+)
+
+# Mostrar tabla de zona
+tabla_zona %>%
+  kbl(caption = "Distribución por zona") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Región
+tabla_region <- crear_tabla_categoria(merged_data, 
+                                    "region_nombre", 
+                                    "Región")
+
+# Mostrar tabla de región
+tabla_region %>%
+  kbl(caption = "Distribución por región") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Nivel educacional
+tabla_educ <- crear_tabla_categoria(merged_data, 
+                                  "educ_rec", 
+                                  "Nivel educacional")
+
+# Mostrar tabla de nivel educacional
+tabla_educ %>%
+  kbl(caption = "Distribución por nivel educacional") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Tenencia de vivienda
+tabla_tenencia <- crear_tabla_categoria(merged_data, 
+                                      "tenencia_vivienda", 
+                                      "Tenencia de vivienda")
+
+# Mostrar tabla de tenencia
+tabla_tenencia %>%
+  kbl(caption = "Distribución por tenencia de vivienda") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
 La tabla resultante proporciona una primera aproximación a la capacidad predictiva de cada variable, mostrando diferencias significativas en varias dimensiones entre el grupo elite y el resto de la población.
+
+##12. Variables de bienestar de EBS
+
+```{r}
+# Variables de bienestar EBS
+merged_data <- merged_data %>%
+  mutate(
+    # Variables de bienestar (estandarizadas)
+    apoyo_empleabilidad = scale(case_when(
+      j3a_1 %in% 1:5 ~ j3a_1,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    balance_trabajo_vida = scale(case_when(
+      j3a_4 %in% 1:5 ~ j3a_4,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    satisfaccion_tiempo = scale(case_when(
+      a3_4 %in% 1:5 ~ a3_4,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    logro_metas = scale(case_when(
+      j3a_5 %in% 1:5 ~ j3a_5,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    interferencia_domestica = scale(case_when(
+      c6 %in% 1:5 ~ c6,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    flexibilidad_ausencias = case_when(
+      c3_2 == 1 ~ 1,  # Sí
+      c3_2 == 2 ~ 0,  # No
+      TRUE ~ NA_real_
+    )
+  )
+
+# Tabla de variables de bienestar
+variables_bienestar <- c("apoyo_empleabilidad", "balance_trabajo_vida", 
+                        "satisfaccion_tiempo", "logro_metas", 
+                        "interferencia_domestica", "flexibilidad_ausencias")
+
+tabla_bienestar <- data.frame(
+  Variable = c("Apoyo a empleabilidad", "Balance trabajo-vida",
+               "Satisfacción con tiempo", "Logro de metas",
+               "Interferencia doméstica", "Flexibilidad ausencias")
+)
+
+# Calculamos estadísticas para No elite (elite = 0)
+stats_no_elite <- merged_data %>%
+  filter(elite == 0) %>%
+  summarise(across(all_of(variables_bienestar),
+                  list(media = ~mean(., na.rm = TRUE),
+                       de = ~sd(., na.rm = TRUE)))) %>%
+  t() %>%
+  as.data.frame()
+
+# Calculamos estadísticas para Elite (elite = 1)
+stats_elite <- merged_data %>%
+  filter(elite == 1) %>%
+  summarise(across(all_of(variables_bienestar),
+                  list(media = ~mean(., na.rm = TRUE),
+                       de = ~sd(., na.rm = TRUE)))) %>%
+  t() %>%
+  as.data.frame()
+
+# Combinamos todo
+tabla_bienestar$`Media no elite` <- stats_no_elite[seq(1, nrow(stats_no_elite), 2), 1]
+tabla_bienestar$`DE no elite` <- stats_no_elite[seq(2, nrow(stats_no_elite), 2), 1]
+tabla_bienestar$`Media elite` <- stats_elite[seq(1, nrow(stats_elite), 2), 1]
+tabla_bienestar$`DE elite` <- stats_elite[seq(2, nrow(stats_elite), 2), 1]
+
+# Mostrar tabla
+tabla_bienestar %>%
+  kbl(caption = "Comparación de variables de bienestar entre grupos (valores estandarizados)",
+      digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
