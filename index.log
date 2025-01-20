@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.16)  19 JAN 2025 10:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.16)  19 JAN 2025 23:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -448,22 +448,25 @@ File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
 \l__pdf_internal_box=\box73
 ) (./index.aux
 
-LaTeX Warning: Label `tab:unnamed-chunk-9' multiply defined.
+LaTeX Warning: Label `tab:data_merging_analysis' multiply defined.
 
 
-LaTeX Warning: Label `tab:unnamed-chunk-13' multiply defined.
+LaTeX Warning: Label `tab:unnamed-chunk-8' multiply defined.
 
 
-LaTeX Warning: Label `tab:unnamed-chunk-13' multiply defined.
+LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
 
 
-LaTeX Warning: Label `tab:unnamed-chunk-13' multiply defined.
+LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
 
 
-LaTeX Warning: Label `tab:unnamed-chunk-13' multiply defined.
+LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
 
 
-LaTeX Warning: Label `tab:unnamed-chunk-13' multiply defined.
+LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
 
 )
 \openout1 = `index.aux'.
@@ -556,110 +559,130 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 LaTeX Font Info:    Trying to load font information for U+msb on input line 89.
 (/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) (./index.toc)
+) (./index.toc
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 1.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 1.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 1.
+)
 \tf@toc=\write3
 \openout3 = `index.toc'.
 
-<index_files/figure-latex/unnamed-chunk-2-1.pdf, id=4, 614.295pt x 794.97pt>
-File: index_files/figure-latex/unnamed-chunk-2-1.pdf Graphic file (type pdf)
-<use index_files/figure-latex/unnamed-chunk-2-1.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-2-1.pdf  used on input line 135.
-(pdftex.def)             Requested size: 469.75604pt x 607.9196pt.
 
 
 [1
 
 {/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 128.
+(/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
+File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
 
-[2 <./index_files/figure-latex/unnamed-chunk-2-1.pdf>]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 152.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 152.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 152.
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 194.
+[2{/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
+<index_files/figure-latex/unnamed-chunk-2-1.pdf, id=55, 614.295pt x 794.97pt>
+File: index_files/figure-latex/unnamed-chunk-2-1.pdf Graphic file (type pdf)
+<use index_files/figure-latex/unnamed-chunk-2-1.pdf>
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-2-1.pdf  used on input line 283.
+(pdftex.def)             Requested size: 469.75604pt x 607.9196pt.
+
+
+[3]
+
+[4 <./index_files/figure-latex/unnamed-chunk-2-1.pdf>]
+<index_files/figure-latex/missing_pattern_complete-1.pdf, id=79, 722.7pt x 867.24pt>
+File: index_files/figure-latex/missing_pattern_complete-1.pdf Graphic file (type pdf)
+<use index_files/figure-latex/missing_pattern_complete-1.pdf>
+Package pdftex.def Info: index_files/figure-latex/missing_pattern_complete-1.pdf  used on input line 311.
+(pdftex.def)             Requested size: 469.76045pt x 563.71257pt.
+
+
+[5] [6 <./index_files/figure-latex/missing_pattern_complete-1.pdf>]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 351.
 (/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-<outputs/grafico_deciles.jpg, id=30, 3011.25pt x 1806.75pt>
+<outputs/grafico_deciles.jpg, id=95, 3011.25pt x 1806.75pt>
 File: outputs/grafico_deciles.jpg Graphic file (type jpg)
 <use outputs/grafico_deciles.jpg>
-Package pdftex.def Info: outputs/grafico_deciles.jpg  used on input line 199.
+Package pdftex.def Info: outputs/grafico_deciles.jpg  used on input line 356.
 (pdftex.def)             Requested size: 469.72556pt x 281.83533pt.
 
 
-[3 <./outputs/grafico_deciles.jpg>]
-Overfull \hbox (233.2867pt too wide) in paragraph at lines 219--228
+[7 <./outputs/grafico_deciles.jpg>]
+Overfull \hbox (233.2867pt too wide) in paragraph at lines 372--381
  [][] 
  []
 
-<index_files/figure-latex/unnamed-chunk-6-1.pdf, id=39, 722.7pt x 433.62pt>
+<index_files/figure-latex/unnamed-chunk-5-1.pdf, id=102, 722.7pt x 433.62pt>
+File: index_files/figure-latex/unnamed-chunk-5-1.pdf Graphic file (type pdf)
+<use index_files/figure-latex/unnamed-chunk-5-1.pdf>
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-5-1.pdf  used on input line 396.
+(pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
+<index_files/figure-latex/unnamed-chunk-5-2.pdf, id=103, 722.7pt x 433.62pt>
+File: index_files/figure-latex/unnamed-chunk-5-2.pdf Graphic file (type pdf)
+<use index_files/figure-latex/unnamed-chunk-5-2.pdf>
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-5-2.pdf  used on input line 397.
+(pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
+
+
+[8 <./index_files/figure-latex/unnamed-chunk-5-1.pdf>]
+<index_files/figure-latex/unnamed-chunk-6-1.pdf, id=114, 722.7pt x 433.62pt>
 File: index_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-6-1.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 247.
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 421.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
-<index_files/figure-latex/unnamed-chunk-6-2.pdf, id=40, 722.7pt x 433.62pt>
+<index_files/figure-latex/unnamed-chunk-6-2.pdf, id=115, 722.7pt x 433.62pt>
 File: index_files/figure-latex/unnamed-chunk-6-2.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-6-2.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-2.pdf  used on input line 248.
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-2.pdf  used on input line 422.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
 
 
-[4 <./index_files/figure-latex/unnamed-chunk-6-1.pdf>]
-<index_files/figure-latex/unnamed-chunk-7-1.pdf, id=52, 722.7pt x 433.62pt>
-File: index_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
-<use index_files/figure-latex/unnamed-chunk-7-1.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 276.
-(pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
-<index_files/figure-latex/unnamed-chunk-7-2.pdf, id=53, 722.7pt x 433.62pt>
-File: index_files/figure-latex/unnamed-chunk-7-2.pdf Graphic file (type pdf)
-<use index_files/figure-latex/unnamed-chunk-7-2.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-7-2.pdf  used on input line 277.
-(pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
+[9 <./index_files/figure-latex/unnamed-chunk-5-2.pdf>]
 
-
-[5 <./index_files/figure-latex/unnamed-chunk-6-2.pdf>]
-
-[6 <./index_files/figure-latex/unnamed-chunk-7-1.pdf> <./index_files/figure-latex/unnamed-chunk-7-2.pdf>]
-Overfull \hbox (46.98021pt too wide) in paragraph at lines 364--393
+[10 <./index_files/figure-latex/unnamed-chunk-6-1.pdf> <./index_files/figure-latex/unnamed-chunk-6-2.pdf>]
+Overfull \hbox (46.98021pt too wide) in paragraph at lines 520--549
  [][] 
  []
 
 
-Overfull \hbox (62.99466pt too wide) in paragraph at lines 407--422
- [][] 
- []
-
-
-Overfull \hbox (124.6331pt too wide) in paragraph at lines 437--460
- [][] 
- []
-
-
-Overfull \hbox (29.7002pt too wide) in paragraph at lines 513--550
- [][] 
- []
-
-
-Overfull \hbox (19.06088pt too wide) in paragraph at lines 556--571
- [][] 
- []
-
-
-Overfull \hbox (85.03297pt too wide) in paragraph at lines 577--600
+Overfull \hbox (62.99466pt too wide) in paragraph at lines 562--577
  [][] 
  []
 
 
 
-[7]
+[11]
+Overfull \hbox (124.6331pt too wide) in paragraph at lines 605--628
+ [][] 
+ []
 
-[8]
 
-[9]
+Overfull \hbox (29.7002pt too wide) in paragraph at lines 689--726
+ [][] 
+ []
 
-[10] (./index.aux)
+
+Overfull \hbox (19.06088pt too wide) in paragraph at lines 732--747
+ [][] 
+ []
+
+
+Overfull \hbox (85.03297pt too wide) in paragraph at lines 753--776
+ [][] 
+ []
+
+
+
+[12]
+
+[13]
+
+[14]
+
+[15] (./index.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 1
 L3 programming layer <2024-12-25>
@@ -669,18 +692,18 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 12856 strings out of 475178
- 203099 string characters out of 5763815
- 635008 words of memory out of 5000000
- 35584 multiletter control sequences out of 15000+600000
- 599317 words of font info for 75 fonts, out of 8000000 for 9000
+ 12961 strings out of 475178
+ 205522 string characters out of 5763815
+ 633312 words of memory out of 5000000
+ 35666 multiletter control sequences out of 15000+600000
+ 605675 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 89i,9n,93p,348b,593s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on index.pdf (10 pages, 5314511 bytes).
+ 89i,9n,93p,759b,595s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
+Output written on index.pdf (15 pages, 5376778 bytes).
 PDF statistics:
- 147 PDF objects out of 1000 (max. 8388607)
- 109 compressed objects within 2 object streams
- 34 named destinations out of 1000 (max. 500000)
- 31 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 272 PDF objects out of 1000 (max. 8388607)
+ 221 compressed objects within 3 object streams
+ 51 named destinations out of 1000 (max. 500000)
+ 164 words of extra memory for PDF output out of 10000 (max. 10000000)
 

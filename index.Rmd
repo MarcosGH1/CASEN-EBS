@@ -14,22 +14,28 @@ output:
     toc: true
 ---
 
-Este proyecto analiza la distribución y características del 10% superior de los hogares de mayores ingresos en Chile, utilizando datos de las encuestas CASEN 2020 y EBS 2021. El objetivo es desarrollar un análisis descriptivo detallado y posteriormente un modelo de machine learning que permita predecir la pertenencia a este grupo.
+## Abstract
+
+Este estudio analiza los determinantes de la pertenencia al 10% superior de ingresos en Chile utilizando técnicas de machine learning. Mediante el uso combinado de las encuestas CASEN 2020 y EBS 2021, desarrollamos un modelo predictivo que identifica las características socioeconómicas, demográficas y de bienestar subjetivo asociadas a la pertenencia a este grupo. El análisis contribuye a la literatura sobre élites económicas en Chile y América Latina, aportando evidencia sobre los mecanismos de reproducción de la desigualdad económica.
+
+La literatura internacional muestra que el 10% de mayores ingresos presenta características sociodemográficas distintivas que tienen profundas implicaciones para la cohesión social y las políticas públicas: Influencia Política (Gilens, 2012); impacto en Desigualdad y Bienestar (Wilkinson & Pickett, 2010; 2019); Segregación Social (Méndez & Gayo, 2024; Hernando & Mitchell, 2023). En ese contexto, un modelo predictivo de Machine Learning permitirá:
+- Validar si los patrones internacionales se replican en Chile
+- Identificar variables no teorizadas previamente
+
 
 ## Objetivos
----
 
 ### Objetivo General
 Desarrollar y evaluar un modelo de machine learning para predecir la pertenencia al 10% superior de ingresos en Chile utilizando datos socioeconómicos y de bienestar.
 
 ### Objetivos Específicos
-- Identificar un conjunto de variables predictoras capaces de predecir la pertenencia al 10% superior de ingresos
+- Identificar un conjunto de variables capaces de predecir la pertenencia al 10% superior de ingresos
+- Examinar la distribución espacial y las características socioeconómicas del 10% superior de ingresos
 - Evaluar el desempeño predictivo de diferentes algoritmos de machine learning
 - Analizar la importancia relativa de las variables en la predicción
-- Generar recomendaciones basadas en los patrones identificados
 
-##1.Preparación y descripción de los datos
-Para comenzar el análisis, se cargan las bibliotecas necesarias y se establecen los parámetros de configuración. Se utiliza una combinación de paquetes para manipulación de datos (dplyr), visualización (ggplot2), manejo de datos espaciales (sf, geodata, chilemapas) y presentación de resultados (kableExtra).
+## Preparación y descripción de los datos
+Para comenzar el análisis, se cargan las bibliotecas necesarias y se establecen los parámetros de configuración. Se utiliza una combinación de paquetes para manipulación de datos (haven, dplyr, tidyr, purrr, magrittr, stringr), visualización (ggplot2, scales, viridis, DiagrammeR), manejo de datos espaciales (sf, geodata, chilemapas, rmapshaper) y presentación de resultados (kableExtra), presentación (kableExtra, webshot2, naniar) y utilidades (devtools, rlang).
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -83,12 +89,12 @@ chile_map <- gadm("CHL", level=1, path=tempdir())
 El análisis utiliza dos fuentes principales de datos:
 
 CASEN 2020 (versión reducida, en formato rds para poder subirse a GitHub): Proporciona información socioeconómica detallada
-EBS 2021: Complementa con información adicional y factores de expansión actualizados
+EBS 2021: Complementa con información adicional (especialmente de bienestar) y factores de expansión actualizados
 
 En el proceso de preparación, se realizan los siguientes pasos:
-a. Cálculo de deciles de ingreso para identificar el 10% superior según la muestra total de la encuesta CASEN, no de la submuestra de la EBS
-b. Creación de variable binaria para el grupo objetivo
-c. Merge de ambas bases de datos manteniendo la estructura de la CASEN
+a. Cálculo de deciles de ingreso para identificar el 10% superior según la muestra total de la encuesta CASEN, no de la submuestra de la EBS.
+b. Creación de variable binaria para el grupo objetivo.
+c. Merge de ambas bases de datos manteniendo la estructura de la CASEN.
 
 ```{r}
 casen <- readRDS(ruta_casen)
@@ -127,8 +133,80 @@ merged_data <- merge(
   )
 ```
 
-##3. Modelo Entidad-Relación
-La estructura de datos se organiza en cuatro entidades principales:
+La tabla de resumen del proceso de merge que aparece en el documento muestra que:
+
+- CASEN original tiene 185,437 observaciones: Presenta sólo 98 NAs en la variable ytotcorh de ingreso, lo cual es marginal. También debe considerarse que estamos tomando al hogar como unidad y no a individuos (y los individuos que responden la encuesta pueden no corresponder a los/las jefes/as de hogar).
+- EBS y la base final fusionada tienen 10,921 observaciones (debe considerarse también que quienes responden no necesariamente con la misma persona que en el caso de CASEN, a pesar de ser el mismo hogar).
+
+Esto implica una retención del 5.9% de la muestra original de CASEN, lo cual es esperable dado que la EBS es una submuestra de CASEN. Lo crucial aquí es verificar que esta submuestra mantiene representatividad, especialmente para el grupo de interés (10% superior).
+
+### Representatividad y factores de expansión:
+Del análisis de los factores de expansión se observa:
+
+- El 10% superior representa 1,859,535 personas en la población.
+- El resto representa 13,304,855 personas.
+- La razón de expansión promedio es mayor para el grupo elite (1,909 vs 1,337).
+
+```{r data_merging_analysis}
+# Análisis inicial de datos antes del merge
+n_casen_original <- nrow(casen)
+n_ebs_original <- nrow(ebs)
+
+# Análisis después del merge
+n_merged <- nrow(merged_data)
+
+# Crear tabla de resumen del proceso de merge
+merge_summary <- data.frame(
+  etapa = c("CASEN original", "EBS original", "Después del merge"),
+  n_observaciones = c(n_casen_original, n_ebs_original, n_merged)
+) %>%
+  mutate(
+    perdida_registros = c(NA, NA, n_casen_original - n_merged),
+    porcentaje_retencion = c(NA, NA, round(n_merged/n_casen_original * 100, 1))
+  )
+
+kable(merge_summary,
+      caption = "Resumen del proceso de merge CASEN-EBS",
+      col.names = c("Etapa", "N observaciones", "Pérdida de registros", "% retención")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Análisis de deciles antes y después del merge
+deciles_comparison <- casen %>%
+  group_by(decil) %>%
+  summarise(n_casen = n()) %>%
+  left_join(
+    merged_data %>%
+      group_by(decil) %>%
+      summarise(n_merged = n()),
+    by = "decil"
+  ) %>%
+  mutate(
+    prop_retencion = round(n_merged/n_casen * 100, 1)
+  )
+
+kable(deciles_comparison,
+      caption = "Retención de observaciones por decil después del merge",
+      col.names = c("Decil", "N en CASEN", "N después del merge", "% retención")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Los 974 casos que pertenecen al 10% superior representan aproximadamente el 9% de nuestra muestra, lo cual es consistente con la distribución poblacional esperada. Esto nos proporciona una base sólida para el modelamiento:
+
+- La proporción 9%-91% (vs un 10%-90% ideal) representa un desbalance moderado.
+- Es manejable con ponderación de clases en Random Forest.
+- No requiere submuestreo de la clase mayoritaria.
+
+Rothman y Greenland (2018) argumentan que es más apropiado planificar el tamaño del estudio basándose en la precisión deseada rather que en el poder estadístico tradicional. En nuestro caso, con 974 casos  de 10,921 observaciones, alcanzamos una precisión adecuada.
+
+En términos del tamaño muestral requerido para el análisis predictivo, considerando aproximadamente 45 predictores candidatos (6-1[dummy] en bienestar, 9-1 en tenencia, 5-1 en nivel educacional, 12-1 intervalos de edad, 16-1 en Región, más zona y sexo), los 974 eventos nos proporcionan 21.6 eventos por variable, superando los umbrales mínimos estándar en la literatura de predicción. Si bien este criterio es simplificador (van Smeden et al., 2019), proporciona una base razonable para proceder con el análisis predictivo propuesto.
+
+##  Modelo Entidad-Relación
+El diagrama presentado muestra la estructura de los datos, que se organiza en cuatro entidades principales:
+
+- REGIÓN {id_region}: Permite el análisis territorial de la distribución del ingreso.
+- HOGAR {folio_casen} Unidad fundamental de análisis económico.
+- INDIVIDUO {id_persona_casen} Unidad básica de observación.
+- CARACTERÍSTICAS: Atributos del individuo (sea o no jefe/a de hogar).
 
 ```{r}
 DiagrammeR::grViz("
@@ -186,10 +264,29 @@ DiagrammeR::grViz("
 width = 800, height = 500)
 ```
 
-##4. Análisis descriptivo inicial
-Para comprender la distribución de ingresos en Chile, comenzamos examinando las estadísticas básicas por decil. Esto nos permite contextualizar el 10% superior dentro de la distribución general de ingresos del país.
+## Análisis descriptivo inicial
+Examinación de valores faltantes
+El gráfico de patrones de valores faltantes nos muestra una estructura importante:
 
-```{r}
+- Variables sin datos faltantes (0% missing):
+Variables sociodemográficas básicas (edad, sexo, zona, región)
+Variables económicas (ytotcorh, elite, fexp)
+Variables educativas (e6a)
+Variables de vivienda (v13)
+
+- Variables con alta tasa de missing (~42%):
+Variables de bienestar laboral (j3a_1, j3a_4, j3a_5): 4,606 casos missing
+Variables de uso del tiempo (a3_4, c3_2, c6): 4,606 casos missing
+
+- Variables con tasa media de missing (~35%):
+Tenencia de vivienda (v13_propia): 3,805 casos missing
+
+Esto sugiere:
+Las variables socioeconómicas básicas están completas.
+Hay un patrón sistemático de no respuesta en variables de bienestar.
+La pérdida de información en variables de bienestar afecta aproximadamente al 42% de la muestra.
+
+```{r missing_pattern_complete, fig.height=12, fig.width=10}
 stats_deciles <- merged_data %>%
   group_by(decil) %>%
   summarise(
@@ -199,26 +296,74 @@ stats_deciles <- merged_data %>%
     proporcion_poblacion = sum(fexp)/sum(merged_data$fexp)
   )
 
-# Visualizar patrones de valores faltantes
-vars_of_interest <- c("edad", "sexo", "zona", "region", "educ_rec", "tenencia_vivienda", 
-                     "ytotcorh", "elite", "fexp")
+vars_of_interest <- c(
+  # Variables sociodemográficas básicas (verificadas en el merge)
+  "edad", "sexo", "zona", "region", 
+  
+  # Variables educativas y de vivienda
+  "e6a", "v13", "v13_propia",
+  
+  # Variables económicas
+  "ytotcorh", "elite", "fexp",
+  
+  # Variables de bienestar de EBS (verificar nombres exactos)
+  "j3a_1", "j3a_4", "a3_4", "j3a_5",
+  "c1_4", "c1_5", "c3_2", "c6"
+)
 
+# Verificar primero qué variables existen
+existing_vars <- names(merged_data)
+vars_of_interest <- vars_of_interest[vars_of_interest %in% existing_vars]
+
+# Crear visualización de patrones de valores faltantes
 gg_miss_var(merged_data[vars_of_interest]) +
   theme_minimal() +
   theme(
-    axis.text.y = element_text(size = 8),
-    plot.title = element_text(size = 12)
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(size = 12, face = "bold"),
+    panel.grid.major.x = element_line(color = "grey90"),
+    panel.grid.minor.x = element_blank()
   ) +
-  labs(title = "Patrón de valores faltantes en variables principales",
-       x = "Número de valores faltantes",
-       y = "Variables")
+  labs(
+    title = "Patrón de valores faltantes en variables principales",
+    subtitle = "Se muestran todas las variables relevantes para el modelo",
+    x = "Número de valores faltantes",
+    y = "Variables"
+  )
+
+# Crear tabla resumen de valores faltantes
+missing_summary <- merged_data[vars_of_interest] %>%
+  summarise(across(everything(), 
+                  list(
+                    n_missing = ~sum(is.na(.)),
+                    pct_missing = ~mean(is.na(.)) * 100
+                  ))) %>%
+  pivot_longer(everything(), 
+               names_to = c("variable", "stat"), 
+               names_pattern = "(.*)_(n_missing|pct_missing)") %>%
+  pivot_wider(names_from = stat, 
+             values_from = value) %>%
+  mutate(
+    total_obs = nrow(merged_data),
+    obs_available = total_obs - n_missing,
+    pct_missing = round(pct_missing, 2)
+  ) %>%
+  arrange(desc(pct_missing))
+
+# Mostrar tabla de resumen
+kable(missing_summary,
+      col.names = c("Variable", "N Missing", "% Missing", "Total Obs", "Obs Disponibles"),
+      caption = "Resumen detallado de valores faltantes por variable") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
+  row_spec(which(missing_summary$pct_missing > 20), 
+          background = "#FFE5E5")  # Resaltar variables con más del 20% de valores faltantes
+
 
 ```
 
-Tenemos, para nuestro caso positivo, 974 casos de una muestra de 10921, sin NAs, esto es, alrededor de un 9% de la muestra, lo que se considera suficiente para informar un modelo de Machine Learning.
+## Visualización de la distribución por deciles
 
-##5. Visualización de la distribución por deciles
-El gráfico siguiente muestra la marcada desigualdad en la distribución de ingresos en Chile. Se destaca el porcentaje del ingreso total que captura ese 10%.
+El gráfico de ingresos promedio por decil muestra una marcada desigualdad. El décimo decil (en rojo) tiene un ingreso promedio de más de 4 millones de pesos. La diferencia con el noveno decil es especialmente notoria, pues el 10% superior captura 40.5% del ingreso total.
 
 ```{r}
 # Calcular proporción del ingreso del 10% superior
@@ -267,31 +412,9 @@ print(p)
 dev.off()
 
 knitr::include_graphics("outputs/grafico_deciles.jpg")
-
-```{r descriptive_tables}
-# Función para crear tablas combinadas
-create_combined_table <- function(data, group_var, value_vars) {
-  data %>%
-    group_by(!!sym(group_var)) %>%
-    summarise(across(
-      all_of(value_vars),
-      list(
-        mean = ~mean(., na.rm = TRUE),
-        sd = ~sd(., na.rm = TRUE),
-        na = ~mean(is.na(.))
-      )
-    )) %>%
-    mutate(across(
-      ends_with("_mean"),
-      ~paste0(round(., 2), " (", round(get(str_replace(cur_column(), "_mean", "_sd")), 2), ")")
-    )) %>%
-    select(-ends_with("_sd"))
-}
-
-
 ```
 
-##6. Caracterización del 10% superior vs resto de la población
+## Caracterización del 10% superior vs resto de la población
 La tabla siguiente compara características clave entre este grupo y el resto de la población. Se incluyen variables territoriales (región, urbano/rural), demográficas (edad, sexo), socioeconómicas (educación) y de bienestar. Los valores están ponderados usando los factores de expansión provistos por la EBS: seleccionamos éstos en vez de los de CASEN por tratarse de una encuesta bifásica.
 
 ```{r}
@@ -327,7 +450,7 @@ stats_descriptivos %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-##7. Análisis territorial
+## Análisis territorial
 El análisis territorial se desarrolla en dos dimensiones complementarias:
 
 Proporción interna: Qué porcentaje de la población de cada región pertenece al 10% superior
@@ -432,7 +555,8 @@ p2 <- ggplot(stats_distribucion,
 p1
 p2
 ```
-Los gráficos resultantes revelan patrones interesantes. La proporción de elite dentro de cada región (gráfico azul) muestra una concentración en ciertas áreas. La distribución del total de la elite (gráfico rojo) evidencia una fuerte centralización
+
+Los gráficos resultantes revelan patrones interesantes. La proporción de elite dentro de cada región (gráfico azul) muestra una concentración en ciertas regiones (Magallanes, RM, Antofagasta,) La distribución del total de la elite (gráfico rojo) evidencia una fuerte centralización en RM.
 
 ##8. Visualización espacial 
 Aquí generamos mapas que permiten una visualización más intuitiva de los patrones espaciales. Se utilizan dos mapas que corresponden a las mismas dimensiones analizadas en los gráficos de barras:
@@ -536,9 +660,9 @@ m1
 m2
 ```
 
-##9. Sexo jefe/a de hogar
+## Sexo jefe/a de hogar
 
-Recodificación para identificar sexo de jefe de hogar. No es posible saberlo para el 100% de los casos, pero con variables de sexo y de relación de quien responde con jefe/a de hogar, se puede reducir para cerca del 70% de los casos.
+Recodificación para identificar sexo de jefe de hogar. No es posible saberlo para el 100% de los casos, pero con variables de sexo y de relación de quien responde con jefe/a de hogar, se puede reducir para cerca del 70%.
 
 ```{r}
 # Deducir sexo del jefe de hogar
@@ -562,7 +686,10 @@ table(merged_data$sexo_jh, useNA = "ifany")
 merged_data_jh <- merged_data %>%
   filter(pco1 == 1)
 ```
-Sexo del/la jefe de hogar
+Observaciones importantes:
+- Los hogares con jefatura masculina tienen más del doble de probabilidad de pertenecer al 10% superior.
+- Hay una discrepancia entre proporción muestral y poblacional que sugiere sobremuestreo de - hogares con jefatura femenina.
+- La proporción de elite es notablemente menor en hogares con jefatura femenina.
 
 ```{r}
 # Variable de parentesco y filtrar por jefes de hogar
@@ -630,7 +757,17 @@ tabla_sexo %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-##10. Edad
+## Edad
+
+Se utilizan intervalos quinquenales desde los 30 años e intervalos más amplios en edades extremas. Concentración en edades medias: El peak de proporción elite está en 30-34 años (19.5%)
+y 35-39 años (17.3%). Declina consistentemente después de los 40.
+
+Tiene muy baja representación en extremos: jóvenes (2.2% en 18-29) y casi nula en mayores de 80 (0.3%). Declina fuertemente después de los 70 años.
+
+Diferencias muestra-población:
+- Ligera subrepresentación de grupos 30-39 años.
+- Sobrerrepresentación de grupos mayores.
+- Factor de expansión utilizados.
 
 ```{r}
 # Tabla de edad
@@ -679,7 +816,13 @@ tabla_edad %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-##11. Nivel educacional
+## Nivel educacional
+
+Decisiones clave aquí:
+- Agrupación en 5 categorías principales
+- Distinción entre educación técnica y universitaria
+- Postgrado como categoría separada, a pesar del bajo N, por la sobrerepresentación del 10% superior.
+- Manejo explícito de valores NA
 
 ```{r}
 # Tabla de nivel educacional
@@ -716,17 +859,24 @@ tabla_educ %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+Gradiente educacional marcado:
+- Postgrado: 58.7% pertenece al 10% superior; Universitaria: 30.5%; Técnica superior: 9.9%; Media o menos: < 5%.
 
-##11. Resumen variables potencialmente predictoras
+Marcada diferencia con distribución poblacional:41.1% tiene hasta educación media; 25.3% tiene educación universitaria; Solo 2.2% tiene postgrado.
+
+## Resumen variables potencialmente predictoras
+
 Para preparar la fase de modelamiento, se realiza un análisis exploratorio de las variables que podrían predecir la pertenencia al 10% superior. El análisis de estas variables se realiza considerando:
+- Su distribución diferenciada entre elite y no elite
+- La presencia de valores faltantes que podrían afectar el modelamiento
+- La necesidad de transformaciones o recodificaciones para su uso en modelos predictivos
 
-Su distribución diferenciada entre elite y no elite
-La presencia de valores faltantes que podrían afectar el modelamiento
-La necesidad de transformaciones o recodificaciones para su uso en modelos predictivos
-
+Decisiones relevantes:
+- Combinación de tipo (v13) y propiedad (v13_propia)
+- Distinción entre vivienda pagada y en proceso de pago
+- Categorización explícita de situaciones irregulares
 
 ```{r}
-# Creación de variable combinada de tenencia de vivienda
 # Creación de variable combinada de tenencia de vivienda
 merged_data <- merged_data %>%
   mutate(
@@ -779,7 +929,13 @@ tabla_tenencia %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-Variables potenciales
+Patrones destacados: Alta proporción elite en vivienda propia pagándose (36.1%), mucho más que en vivienda propia pagada (9.7%). Respecto a la muestra total, hay un predominio de vivienda propia pagada (55.1%) e importante sector de arriendo (19.2%).
+
+
+Casos especiales:
+Alto porcentaje elite en propiedad compartida pagándose (88.4%), pero muy pocos casos (n=3).
+
+## Variables potenciales
 
 ```{r}
 stats_edad <- merged_data %>%
@@ -871,9 +1027,16 @@ tabla_tenencia %>%
 
 ```
 
-La tabla resultante proporciona una primera aproximación a la capacidad predictiva de cada variable, mostrando diferencias significativas en varias dimensiones entre el grupo elite y el resto de la población.
+La tabla resultante proporciona una primera aproximación a la capacidad predictiva de cada variable, mostrando diferencias significativas en varias dimensiones entre el grupo elite y el resto de la población. Por ejemplo, el 10% es más joven en promedio (41,27 vs 44,87) y tiene mayor proporción de hombres  (14% vs 10,6%) y hay fuerte concentración en urbes (13,2% vs 5,3%).
 
-##12. Variables de bienestar de EBS
+Sin embargo, hay importantes diferencias en la calidad de los datos. Las variables básicas tienen pocos valores faltantes (0% NA's) y hay buena representatividad en categorías principales.
+
+## Variables de bienestar de EBS
+
+Decisiones importantes aquí:
+- Uso de scale() para normalizar variables
+- Restricción a valores 1-5 en la escala original
+- Codificación explícita de NA para otros valores
 
 ```{r}
 # Variables de bienestar EBS
@@ -953,3 +1116,44 @@ tabla_bienestar %>%
       digits = 2) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
+
+Patrones clave identificados
+- Diferencias positivas para el 10% superior: Mayor logro de metas, mayor apoyo empleabilidad; mejor balance trabajo-vida.
+- Diferencias negativas/neutras: Menor interferencia doméstica; Diferencias mínimas en satisfacción con tiempo y flexibilidad de ausencias.
+
+Implicancias para el análisis:
+- Las variables de bienestar muestran diferencias sistemáticas.
+- Potencial predictivo moderado pero consistente.
+- Sin embargo, alto número de NAs.
+- Se podría considerar un índice compuesto de bienestar.
+
+## Propuesta de modelo de Machine Learning
+
+A partir de lo anterior, se sugiere un Random Forest  para predecir la pertenencia al 10% superior de ingresos. Esta elección se fundamenta en varias características específicas de nuestros datos y objetivos analíticos. En primer lugar, hemos identificado relaciones no lineales importantes, particularmente en variables como edad y educación. Random Forest, al construir múltiples árboles de decisión, puede capturar estas no linealidades sin necesidad de especificación explícita.
+
+Además, nuestros datos presentan una estructura jerárquica territorial, con importantes efectos de interacción entre variables socioeconómicas y ubicación geográfica. Por ejemplo, el significado de un determinado nivel de ingreso en variables de bienestar podría variar según la región (Mac-Clure et al., 2014). Random Forest maneja naturalmente estas interacciones a través de su proceso de construcción de árboles y la selección aleatoria de variables en cada división.
+
+El desbalance moderado en nuestra variable objetivo (9% vs 91%) también se alinea con las fortalezas de Random Forest, especialmente cuando se implementa con pesos de clase ajustados. Esto es particularmente relevante dado que nuestro interés principal es identificar correctamente a los miembros de un grupo minoritario.
+
+Para la implementación específica, proponemos utilizar la librería ranger en R, que permite un manejo eficiente de datos de gran escala y ofrece opciones para importancia de variables permutacional. Sugerimos una configuración inicial con 1000 árboles, mtry igual a la raíz cuadrada del número de predictores, y un tamaño mínimo de nodo de 5 observaciones. La validación cruzada se realizará mediante una estratificación espacial por región para mantener la representatividad geográfica.
+
+Las variables de bienestar subjetivo, que presentan patrones significativos de valores faltantes (42%), serán manejadas mediante imputación múltiple antes del modelamiento, creando cinco conjuntos de datos completos. También estamos considerando construir un índice de bienestar.
+
+## Bibliografía:
+
+Gilens, M. (2012). Affluence and influence: Economic inequality and political power in America. Princeton, NJ: Princeton University Press.
+
+Hernando, M. & Mitchell, G. (2023). Uncomfortably off: Why the Top 10% of Earners
+Should Care about Inequality. Bristol: Policy Press.
+
+Mac-Clure, O., Barozet, E., & Maturana, V. (2014). Desigualdad, clase media y territorio en Chile: ¿clase media global o múltiples mesocracias según territorios?. Revista EURE - Revista De Estudios Urbano Regionales, 40(121).
+
+Méndez, M.L., & Gayo, M. (2024). The Politics of the Elite: Ideological Orientations, Mothering, and Social Mobilities in Neoliberal Chile. London: Routledge.
+
+Rothman, K. J., & Greenland, S. (2018). Planning Study Size Based on Precision Rather Than Power. Epidemiology, 29(5), 599-603.
+
+van Smeden, M., Moons, K. G., de Groot, J. A., Collins, G. S., Altman, D. G., Eijkemans, M. J., & Reitsma, J. B. (2019). Sample size for binary logistic prediction models: Beyond events per variable criteria. Statistical Methods in Medical Research, 28(8), 2455-2474.
+
+Wilkinson, R. & Pickett, K. (2010). The spirit level: Why equality is better for everyone. London: Penguin.
+
+Wilkinson, R. & Pickett, K. (2019). The inner level: How more equal societies reduce stress, rest
