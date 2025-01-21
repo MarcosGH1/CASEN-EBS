@@ -3,6 +3,8 @@ title: "Análisis del 10% de mayores ingresos en Chile"
 author: "Marcos González, Agustín Rabie"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  pdf_document:
+    toc: true
   html_document:
     theme: flatly
     highlight: tango
@@ -10,8 +12,6 @@ output:
     toc_float: true
     code_folding: hide
     output_file: index.html
-  pdf_document:
-    toc: true
 ---
 
 ## Abstract
@@ -68,7 +68,14 @@ packages <- c(
   "DiagrammeR",
   "webshot2",
   "tidyr",
-  "naniar"
+  "naniar",
+  "vip",
+  "ranger",
+  "caret",
+  "mice",
+  "tidyverse",
+  "pROC",
+  "caret"
 )
 
 for(pkg in packages) {
@@ -451,6 +458,7 @@ stats_descriptivos %>%
 ```
 
 ## Análisis territorial
+
 El análisis territorial se desarrolla en dos dimensiones complementarias:
 
 Proporción interna: Qué porcentaje de la población de cada región pertenece al 10% superior
@@ -558,7 +566,8 @@ p2
 
 Los gráficos resultantes revelan patrones interesantes. La proporción de elite dentro de cada región (gráfico azul) muestra una concentración en ciertas regiones (Magallanes, RM, Antofagasta,) La distribución del total de la elite (gráfico rojo) evidencia una fuerte centralización en RM.
 
-##8. Visualización espacial 
+## Visualización espacial 
+
 Aquí generamos mapas que permiten una visualización más intuitiva de los patrones espaciales. Se utilizan dos mapas que corresponden a las mismas dimensiones analizadas en los gráficos de barras:
 
 El primer mapa muestra la proporción de habitantes de cada región que pertenece al 10% superior. Este mapa ayuda a identificar dónde es más probable encontrar miembros de la elite económica.
@@ -1139,6 +1148,417 @@ Para la implementación específica, proponemos utilizar la librería ranger en 
 
 Las variables de bienestar subjetivo, que presentan patrones significativos de valores faltantes (42%), serán manejadas mediante imputación múltiple antes del modelamiento, creando cinco conjuntos de datos completos. También estamos considerando construir un índice de bienestar.
 
+## Modelo
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+# Preparar datos para modelamiento
+model_data <- merged_data %>%
+  mutate(
+    # Variables categóricas básicas
+    sexo = factor(sexo, levels = c(1, 2), labels = c("Hombre", "Mujer")),
+    zona = factor(zona, levels = c(1, 2), labels = c("Urbana", "Rural")),
+    region = factor(region),
+    
+    # Variable educativa
+    educ_rec = case_when(
+      e6a %in% c(1, 5, 6, 7) ~ "Hasta básica",
+      e6a %in% c(8, 9, 10, 11) ~ "Hasta media",
+      e6a %in% c(12, 13) ~ "Técnica superior",
+      e6a %in% c(14, 15) ~ "Universitaria",
+      e6a %in% c(16, 17) ~ "Postgrado",
+      TRUE ~ NA_character_
+    ) %>% factor(),
+    
+    # Tenencia de vivienda
+    tenencia_vivienda = case_when(
+      v13 == 1 & v13_propia == 1 ~ "Propia pagada",
+      v13 == 1 & v13_propia == 2 ~ "Propia pagándose",
+      v13 == 1 & v13_propia == 3 ~ "Propia compartida (pagada)",
+      v13 == 1 & v13_propia == 4 ~ "Propia compartida (pagándose)",
+      v13 == 2 ~ "Arrendada",
+      v13 == 3 ~ "Cedida",
+      v13 == 9 ~ "Usufructo",
+      v13 == 10 ~ "Ocupación irregular",
+      v13 == 11 ~ "Poseedor irregular",
+      TRUE ~ "Sin información"
+    ) %>% factor(),
+    
+    # Variables de bienestar (estandarizadas)
+    apoyo_empleabilidad = scale(case_when(
+      j3a_1 %in% 1:5 ~ j3a_1,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    balance_trabajo_vida = scale(case_when(
+      j3a_4 %in% 1:5 ~ j3a_4,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    satisfaccion_tiempo = scale(case_when(
+      a3_4 %in% 1:5 ~ a3_4,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    logro_metas = scale(case_when(
+      j3a_5 %in% 1:5 ~ j3a_5,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    interferencia_domestica = scale(case_when(
+      c6 %in% 1:5 ~ c6,
+      TRUE ~ NA_real_
+    ))[,1],
+    
+    flexibilidad_ausencias = case_when(
+      c3_2 == 1 ~ 1,  # Sí
+      c3_2 == 2 ~ 0,  # No
+      TRUE ~ NA_real_
+    ),
+    
+    # Variable objetivo
+    elite = factor(elite, levels = c(0, 1), labels = c("No", "Si"))
+  )
+
+# Verificar estructura preliminar
+glimpse(model_data)
+
+# Definir variables para el modelo
+predictors <- c(
+  # Variables sociodemográficas
+  "edad", "sexo", "zona", "region",
+  
+  # Variables educativas y de vivienda
+  "educ_rec", "tenencia_vivienda",
+  
+  # Variables de bienestar
+  "apoyo_empleabilidad", "balance_trabajo_vida",
+  "satisfaccion_tiempo", "logro_metas",
+  "interferencia_domestica", "flexibilidad_ausencias"
+)
+
+# Verificar existencia de variables
+missing_vars <- setdiff(predictors, names(model_data))
+if(length(missing_vars) > 0) {
+  stop("Variables faltantes: ", paste(missing_vars, collapse = ", "))
+}
+
+# Seleccionar variables finales
+model_data_final <- model_data %>%
+  select(all_of(c(predictors, "elite")))
+
+# Guardar datos procesados
+saveRDS(model_data_final, "data/processed/model_data.rds")
+
+kable(missing_summary,
+      caption = "Resumen de valores faltantes",
+      col.names = c("Variable", "N Missing", "% Missing", "Total Obs", "Obs. Disponibles"),
+      digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(width = "100%")
+```
+
+## Manejo de valores faltantes
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+model_data_clean <- model_data %>%
+  mutate(across(everything(), 
+                ~if(is.factor(.)) as.factor(as.character(.))  
+                else if(is.numeric(.)) as.numeric(as.character(.))  
+                else .))  
+
+# Examinar patrón de valores faltantes
+missing_summary <- model_data_clean %>%
+  summarise(across(everything(), 
+                  list(
+                    n_missing = ~sum(is.na(.)),
+                    pct_missing = ~mean(is.na(.)) * 100
+                  ))) %>%
+  pivot_longer(everything(), 
+               names_to = c("variable", "stat"), 
+               names_pattern = "(.*)_(n_missing|pct_missing)") %>%
+  pivot_wider(names_from = stat, 
+             values_from = value) %>%
+  mutate(
+    total_obs = nrow(model_data_clean),
+    obs_available = total_obs - n_missing,
+    pct_missing = round(pct_missing, 2)
+  ) %>%
+  arrange(desc(pct_missing))
+
+# Mostrar resumen con kable
+kable(missing_summary,
+      caption = "Resumen de valores faltantes",
+      col.names = c("Variable", "N Missing", "% Missing", "Total Obs", "Obs. Disponibles"),
+      digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  scroll_box(width = "100%")
+
+# Imputación simple por grupo para variables numéricas
+model_data_imputed <- model_data_clean %>%
+  group_by(elite) %>%
+  mutate(across(where(is.numeric), 
+                ~if(any(is.na(.))) {
+                  replace(., is.na(.), mean(., na.rm = TRUE))
+                } else {
+                  .
+                })) %>%
+  ungroup() %>%
+  # Crear indicadores de missing para variables con alto % de NA
+  mutate(
+    bienestar_missing = case_when(
+      is.na(apoyo_empleabilidad) | 
+      is.na(balance_trabajo_vida) |
+      is.na(satisfaccion_tiempo) |
+      is.na(logro_metas) |
+      is.na(interferencia_domestica) |
+      is.na(flexibilidad_ausencias) ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+# Verificar estructura final
+str(model_data_imputed)
+
+# Guardar datos procesados
+saveRDS(model_data_imputed, "data/processed/model_data_imputed.rds")
+```
+
+## Partición de datos
+
+```{r}
+set.seed(123)
+
+# Crear índices de partición estratificada 
+train_index <- createDataPartition(
+  y = model_data_imputed$elite,
+  p = 0.7,
+  list = FALSE
+)
+
+# Separar datos
+train_data <- model_data_imputed[train_index, ]
+test_data <- model_data_imputed[-train_index, ]
+
+# Verificar distribución de la variable objetivo y mostrar con kable
+train_dist <- data.frame(
+  Conjunto = "Entrenamiento",
+  Variable = names(table(train_data$elite)),
+  Frecuencia = as.numeric(table(train_data$elite))) %>%
+  mutate(Proporcion = Frecuencia/sum(Frecuencia))
+
+test_dist <- data.frame(
+  Conjunto = "Prueba",
+  Variable = names(table(test_data$elite)),
+  Frecuencia = as.numeric(table(test_data$elite))) %>%
+  mutate(Proporcion = Frecuencia/sum(Frecuencia))
+
+rbind(train_dist, test_dist) %>%
+  kable(caption = "Distribución de clases en conjuntos de entrenamiento y prueba",
+        col.names = c("Conjunto", "Clase", "Frecuencia", "Proporción"),
+        digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Distribución por región
+region_dist <- data.frame(
+  Entrenamiento = table(train_data$region),
+  Prueba = table(test_data$region)
+) %>%
+  rownames_to_column("Region")
+
+kable(region_dist,
+      caption = "Distribución por región en conjuntos de entrenamiento y prueba") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Guardar conjuntos de datos
+if (!dir.exists("data/processed")) {
+  dir.create("data/processed", recursive = TRUE)
+}
+saveRDS(train_data, "data/processed/train_data.rds")
+saveRDS(test_data, "data/processed/test_data.rds")
+
+
+```
+
+## Entrenamiento del modelo
+
+```{r training_model}
+predictors <- c(
+  # Variables sociodemográficas básicas
+  "edad", "sexo", "zona", "region",
+  
+  # Variables educativas y de vivienda
+  "educ_rec", "tenencia_vivienda",
+  
+  # Variables de bienestar
+  "apoyo_empleabilidad", "balance_trabajo_vida",
+  "satisfaccion_tiempo", "logro_metas",
+  "interferencia_domestica", "flexibilidad_ausencias",
+  
+  # Indicador de missing
+  "bienestar_missing"
+)
+
+# Calcular pesos de clase
+n_no <- sum(train_data$elite == "No")
+n_si <- sum(train_data$elite == "Si")
+weight_si <- n_no/n_si
+
+# Configurar control de entrenamiento optimizado
+ctrl <- trainControl(
+  method = "cv",
+  number = 3,  # Reducido para mayor velocidad
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary,
+  savePredictions = TRUE,
+  sampling = "up"
+)
+
+# Grid más eficiente
+hyper_grid <- expand.grid(
+  mtry = c(3, 5),
+  min.node.size = c(3, 10),
+  splitrule = "gini"
+)
+
+# Entrenar modelo
+set.seed(123)
+rf_model <- train(
+  x = train_data[, predictors],
+  y = train_data$elite,
+  method = "ranger",
+  trControl = ctrl,
+  tuneGrid = hyper_grid,
+  num.trees = 1000,
+  importance = "permutation",
+  metric = "ROC",
+  class.weights = c("No" = 1, "Si" = weight_si)
+)
+
+# Mostrar resultados con kable
+resultado_modelo <- data.frame(rf_model$results)
+kable(resultado_modelo,
+      caption = "Resultados del modelo por configuración de hiperparámetros",
+      digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Guardar modelo
+saveRDS(rf_model, "data/processed/rf_model.rds")
+```
+
+## Evaluación del modelo
+
+```{r model_evaluation}
+predictions <- predict(rf_model, newdata = test_data)
+pred_probs <- predict(rf_model, newdata = test_data, type = "prob")
+
+# Matriz de confusión y convertir a kable
+conf_matrix <- confusionMatrix(predictions, test_data$elite)
+conf_table <- as.data.frame(conf_matrix$table)
+kable(conf_table, 
+      caption = "Matriz de confusión") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Métricas de rendimiento
+metrics <- data.frame(
+  Métrica = c("Accuracy", "Sensitivity", "Specificity", "AUC"),
+  Valor = c(
+    conf_matrix$overall["Accuracy"],
+    conf_matrix$byClass["Sensitivity"],
+    conf_matrix$byClass["Specificity"],
+    auc(roc(as.numeric(test_data$elite == "Si"), pred_probs[,"Si"]))
+  )
+)
+
+kable(metrics,
+      caption = "Métricas de rendimiento del modelo",
+      digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Curva ROC
+roc_obj <- roc(as.numeric(test_data$elite == "Si"), pred_probs[,"Si"])
+ggroc(roc_obj) +
+  theme_minimal() +
+  ggtitle(paste("Curva ROC (AUC =", round(auc(roc_obj), 3), ")")) +
+  geom_abline(intercept = 1, slope = 1, linetype = "dashed", alpha = 0.8)
+
+# Importancia de variables
+var_imp <- vip(rf_model)
+```
+
+## Análisis de errores
+
+```{r error_analysis}
+results_df <- data.frame(
+  actual = test_data$elite,
+  predicted = predictions,
+  prob_elite = pred_probs[,"Si"],
+  id = 1:nrow(test_data)
+)
+
+# Analizar falsos positivos y negativos
+error_analysis <- results_df %>%
+  mutate(
+    error_type = case_when(
+      actual == "Si" & predicted == "No" ~ "Falso Negativo",
+      actual == "No" & predicted == "Si" ~ "Falso Positivo",
+      TRUE ~ "Correcto"
+    )
+  )
+
+# Crear resumen de errores
+error_summary <- error_analysis %>%
+  group_by(error_type) %>%
+  summarise(
+    count = n(),
+    percentage = n()/nrow(error_analysis) * 100
+  )
+
+# Mostrar resumen de errores con kable
+kable(error_summary,
+      caption = "Resumen de errores de clasificación",
+      col.names = c("Tipo de error", "Cantidad", "Porcentaje"),
+      digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Análisis por región
+error_by_region <- error_analysis %>%
+  mutate(region = test_data$region[id]) %>%
+  group_by(region, error_type) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  pivot_wider(names_from = error_type, 
+              values_from = count, 
+              values_fill = 0)
+
+# Mostrar distribución de errores por región con kable
+kable(error_by_region,
+      caption = "Distribución de errores por región") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Visualización de distribución de errores
+ggplot(error_analysis, aes(x = prob_elite, fill = error_type)) +
+  geom_histogram(bins = 30, alpha = 0.7) +
+  facet_wrap(~error_type, scales = "free_y") +
+  scale_fill_manual(values = c(
+    "Correcto" = "steelblue",
+    "Falso Negativo" = "darkred",
+    "Falso Positivo" = "orange"
+  )) +
+  theme_minimal() +
+  labs(
+    title = "Distribución de probabilidades predichas por tipo de error",
+    subtitle = "Análisis de errores de clasificación",
+    x = "Probabilidad predicha de pertenecer al 10% superior",
+    y = "Frecuencia"
+  ) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    strip.text = element_text(size = 11),
+    legend.position = "bottom"
+  )
+```
+
+
 ## Bibliografía:
 
 Gilens, M. (2012). Affluence and influence: Economic inequality and political power in America. Princeton, NJ: Princeton University Press.
@@ -1156,4 +1576,4 @@ van Smeden, M., Moons, K. G., de Groot, J. A., Collins, G. S., Altman, D. G., Ei
 
 Wilkinson, R. & Pickett, K. (2010). The spirit level: Why equality is better for everyone. London: Penguin.
 
-Wilkinson, R. & Pickett, K. (2019). The inner level: How more equal societies reduce stress, rest
+Wilkinson, R. & Pickett, K. (2019). The inner level: How more equal societies reduce stress,  restore sanity and improve everyone’s well-being. London: Penguin.

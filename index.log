@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.16)  19 JAN 2025 23:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.16)  21 JAN 2025 13:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -468,6 +468,15 @@ LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
 
 LaTeX Warning: Label `tab:unnamed-chunk-12' multiply defined.
 
+
+LaTeX Warning: Label `tab:unnamed-chunk-16' multiply defined.
+
+
+LaTeX Warning: Label `tab:model_evaluation' multiply defined.
+
+
+LaTeX Warning: Label `tab:error_analysis' multiply defined.
+
 )
 \openout1 = `index.aux'.
 
@@ -581,108 +590,124 @@ File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 
 [2{/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
-<index_files/figure-latex/unnamed-chunk-2-1.pdf, id=55, 614.295pt x 794.97pt>
+
+[3]
+<index_files/figure-latex/unnamed-chunk-2-1.pdf, id=75, 614.295pt x 794.97pt>
 File: index_files/figure-latex/unnamed-chunk-2-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-2-1.pdf>
 Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-2-1.pdf  used on input line 283.
 (pdftex.def)             Requested size: 469.75604pt x 607.9196pt.
 
 
-[3]
+[4]
 
-[4 <./index_files/figure-latex/unnamed-chunk-2-1.pdf>]
-<index_files/figure-latex/missing_pattern_complete-1.pdf, id=79, 722.7pt x 867.24pt>
+[5 <./index_files/figure-latex/unnamed-chunk-2-1.pdf>]
+<index_files/figure-latex/missing_pattern_complete-1.pdf, id=97, 722.7pt x 867.24pt>
 File: index_files/figure-latex/missing_pattern_complete-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/missing_pattern_complete-1.pdf>
 Package pdftex.def Info: index_files/figure-latex/missing_pattern_complete-1.pdf  used on input line 311.
 (pdftex.def)             Requested size: 469.76045pt x 563.71257pt.
 
 
-[5] [6 <./index_files/figure-latex/missing_pattern_complete-1.pdf>]
+[6] [7 <./index_files/figure-latex/missing_pattern_complete-1.pdf>]
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 351.
 (/Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-<outputs/grafico_deciles.jpg, id=95, 3011.25pt x 1806.75pt>
+<outputs/grafico_deciles.jpg, id=114, 3011.25pt x 1806.75pt>
 File: outputs/grafico_deciles.jpg Graphic file (type jpg)
 <use outputs/grafico_deciles.jpg>
 Package pdftex.def Info: outputs/grafico_deciles.jpg  used on input line 356.
 (pdftex.def)             Requested size: 469.72556pt x 281.83533pt.
 
 
-[7 <./outputs/grafico_deciles.jpg>]
+[8 <./outputs/grafico_deciles.jpg>]
 Overfull \hbox (233.2867pt too wide) in paragraph at lines 372--381
  [][] 
  []
 
-<index_files/figure-latex/unnamed-chunk-5-1.pdf, id=102, 722.7pt x 433.62pt>
+<index_files/figure-latex/unnamed-chunk-5-1.pdf, id=120, 722.7pt x 433.62pt>
 File: index_files/figure-latex/unnamed-chunk-5-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-5-1.pdf>
 Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-5-1.pdf  used on input line 396.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
-<index_files/figure-latex/unnamed-chunk-5-2.pdf, id=103, 722.7pt x 433.62pt>
+<index_files/figure-latex/unnamed-chunk-5-2.pdf, id=121, 722.7pt x 433.62pt>
 File: index_files/figure-latex/unnamed-chunk-5-2.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-5-2.pdf>
 Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-5-2.pdf  used on input line 397.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
 
 
-[8 <./index_files/figure-latex/unnamed-chunk-5-1.pdf>]
-<index_files/figure-latex/unnamed-chunk-6-1.pdf, id=114, 722.7pt x 433.62pt>
+[9 <./index_files/figure-latex/unnamed-chunk-5-1.pdf>]
+<index_files/figure-latex/unnamed-chunk-6-1.pdf, id=132, 722.7pt x 433.62pt>
 File: index_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-6-1.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 421.
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 422.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
-<index_files/figure-latex/unnamed-chunk-6-2.pdf, id=115, 722.7pt x 433.62pt>
+<index_files/figure-latex/unnamed-chunk-6-2.pdf, id=133, 722.7pt x 433.62pt>
 File: index_files/figure-latex/unnamed-chunk-6-2.pdf Graphic file (type pdf)
 <use index_files/figure-latex/unnamed-chunk-6-2.pdf>
-Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-2.pdf  used on input line 422.
+Package pdftex.def Info: index_files/figure-latex/unnamed-chunk-6-2.pdf  used on input line 423.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
 
 
-[9 <./index_files/figure-latex/unnamed-chunk-5-2.pdf>]
+[10 <./index_files/figure-latex/unnamed-chunk-5-2.pdf>]
 
-[10 <./index_files/figure-latex/unnamed-chunk-6-1.pdf> <./index_files/figure-latex/unnamed-chunk-6-2.pdf>]
-Overfull \hbox (46.98021pt too wide) in paragraph at lines 520--549
+[11 <./index_files/figure-latex/unnamed-chunk-6-1.pdf> <./index_files/figure-latex/unnamed-chunk-6-2.pdf>]
+Overfull \hbox (46.98021pt too wide) in paragraph at lines 521--550
  [][] 
  []
 
 
-Overfull \hbox (62.99466pt too wide) in paragraph at lines 562--577
- [][] 
- []
-
-
-
-[11]
-Overfull \hbox (124.6331pt too wide) in paragraph at lines 605--628
- [][] 
- []
-
-
-Overfull \hbox (29.7002pt too wide) in paragraph at lines 689--726
- [][] 
- []
-
-
-Overfull \hbox (19.06088pt too wide) in paragraph at lines 732--747
- [][] 
- []
-
-
-Overfull \hbox (85.03297pt too wide) in paragraph at lines 753--776
+Overfull \hbox (62.99466pt too wide) in paragraph at lines 563--578
  [][] 
  []
 
 
 
 [12]
+Overfull \hbox (124.6331pt too wide) in paragraph at lines 606--629
+ [][] 
+ []
+
+
+Overfull \hbox (29.7002pt too wide) in paragraph at lines 690--727
+ [][] 
+ []
+
+
+Overfull \hbox (19.06088pt too wide) in paragraph at lines 733--748
+ [][] 
+ []
+
+
+Overfull \hbox (85.03297pt too wide) in paragraph at lines 754--777
+ [][] 
+ []
+
+
 
 [13]
 
 [14]
 
-[15] (./index.aux)
+[15] [16]
+<index_files/figure-latex/model_evaluation-1.pdf, id=198, 722.7pt x 433.62pt>
+File: index_files/figure-latex/model_evaluation-1.pdf Graphic file (type pdf)
+<use index_files/figure-latex/model_evaluation-1.pdf>
+Package pdftex.def Info: index_files/figure-latex/model_evaluation-1.pdf  used on input line 957.
+(pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
+
+
+[17] [18 <./index_files/figure-latex/model_evaluation-1.pdf>]
+<index_files/figure-latex/error_analysis-1.pdf, id=219, 722.7pt x 433.62pt>
+File: index_files/figure-latex/error_analysis-1.pdf Graphic file (type pdf)
+<use index_files/figure-latex/error_analysis-1.pdf>
+Package pdftex.def Info: index_files/figure-latex/error_analysis-1.pdf  used on input line 999.
+(pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
+
+
+[19 <./index_files/figure-latex/error_analysis-1.pdf>] (./index.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 1
 L3 programming layer <2024-12-25>
@@ -692,18 +717,18 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 12961 strings out of 475178
- 205522 string characters out of 5763815
- 633312 words of memory out of 5000000
- 35666 multiletter control sequences out of 15000+600000
+ 13018 strings out of 475178
+ 206796 string characters out of 5763815
+ 634309 words of memory out of 5000000
+ 35705 multiletter control sequences out of 15000+600000
  605675 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,9n,93p,759b,595s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on index.pdf (15 pages, 5376778 bytes).
+Output written on index.pdf (19 pages, 5395493 bytes).
 PDF statistics:
- 272 PDF objects out of 1000 (max. 8388607)
- 221 compressed objects within 3 object streams
- 51 named destinations out of 1000 (max. 500000)
- 164 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 352 PDF objects out of 1000 (max. 8388607)
+ 293 compressed objects within 3 object streams
+ 69 named destinations out of 1000 (max. 500000)
+ 230 words of extra memory for PDF output out of 10000 (max. 10000000)
 
