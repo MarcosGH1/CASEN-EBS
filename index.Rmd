@@ -3,6 +3,8 @@ title: "Análisis del 10% de mayores ingresos en Chile"
 author: "Marcos González, Agustín Rabie"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  pdf_document:
+    toc: true
   html_document:
     theme: flatly
     highlight: tango
@@ -10,8 +12,6 @@ output:
     toc_float: true
     code_folding: hide
     output_file: index.html
-  pdf_document:
-    toc: true
 ---
 
 ## Abstract
@@ -75,7 +75,8 @@ packages <- c(
   "mice",
   "tidyverse",
   "pROC",
-  "caret"
+  "caret",
+  "pacman"
 )
 
 for(pkg in packages) {
@@ -1365,56 +1366,68 @@ Los resultados muestran que se mantiene la distribución regional en ambos conju
 
 ```{r}
 set.seed(123)
-
-# Crear índices de partición estratificada 
 train_index <- createDataPartition(
-  y = model_data_imputed$elite,
-  p = 0.7,
-  list = FALSE
+ y = model_data_imputed$elite,
+ p = 0.7,
+ list = FALSE
 )
 
-# Separar datos
 train_data <- model_data_imputed[train_index, ]
 test_data <- model_data_imputed[-train_index, ]
 
-# Verificar distribución de la variable objetivo y mostrar con kable
-train_dist <- data.frame(
-  Conjunto = "Entrenamiento",
-  Variable = names(table(train_data$elite)),
-  Frecuencia = as.numeric(table(train_data$elite))) %>%
-  mutate(Proporcion = Frecuencia/sum(Frecuencia))
-
-test_dist <- data.frame(
-  Conjunto = "Prueba",
-  Variable = names(table(test_data$elite)),
-  Frecuencia = as.numeric(table(test_data$elite))) %>%
-  mutate(Proporcion = Frecuencia/sum(Frecuencia))
-
-rbind(train_dist, test_dist) %>%
-  kable(caption = "Distribución de clases en conjuntos de entrenamiento y prueba",
-        col.names = c("Conjunto", "Clase", "Frecuencia", "Proporción"),
-        digits = 3) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
-
-# Distribución por región
-region_dist <- data.frame(
-  Entrenamiento = table(train_data$region),
-  Prueba = table(test_data$region)
+# Tabla de distribución de clases
+rbind(
+ data.frame(
+   Conjunto = "Entrenamiento",
+   Variable = names(table(train_data$elite)), 
+   Frecuencia = as.numeric(table(train_data$elite))
+ ) %>% mutate(Proporcion = Frecuencia/sum(Frecuencia)),
+ data.frame(
+   Conjunto = "Prueba",
+   Variable = names(table(test_data$elite)),
+   Frecuencia = as.numeric(table(test_data$elite))
+ ) %>% mutate(Proporcion = Frecuencia/sum(Frecuencia))
 ) %>%
-  rownames_to_column("Region")
+ kbl(caption = "Distribución de clases en conjuntos de entrenamiento y prueba",
+     col.names = c("Conjunto", "Clase", "Frecuencia", "Proporción"),
+     digits = 3) %>%
+ kable_styling(bootstrap_options = c("striped", "hover"))
 
-kable(region_dist,
-      caption = "Distribución por región en conjuntos de entrenamiento y prueba") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+# Distribución regional
+train_region <- train_data %>%
+ mutate(region_nombre = factor(region,
+                         levels = c("15", "1", "2", "3", "4", "5", "13", "6", 
+                                  "7", "8", "16", "9", "14", "10", "11", "12"),
+                         labels = c("Arica y Parinacota", "Tarapacá", "Antofagasta", 
+                                  "Atacama", "Coquimbo", "Valparaíso", "Metropolitana",
+                                  "O'Higgins", "Maule", "Biobío", "Ñuble", "Araucanía",
+                                  "Los Ríos", "Los Lagos", "Aysén", "Magallanes")))
 
-# Guardar conjuntos de datos
-if (!dir.exists("data/processed")) {
-  dir.create("data/processed", recursive = TRUE)
-}
+test_region <- test_data %>%
+ mutate(region_nombre = factor(region,
+                         levels = c("15", "1", "2", "3", "4", "5", "13", "6", 
+                                  "7", "8", "16", "9", "14", "10", "11", "12"),
+                         labels = c("Arica y Parinacota", "Tarapacá", "Antofagasta", 
+                                  "Atacama", "Coquimbo", "Valparaíso", "Metropolitana",
+                                  "O'Higgins", "Maule", "Biobío", "Ñuble", "Araucanía",
+                                  "Los Ríos", "Los Lagos", "Aysén", "Magallanes")))
+
+region_dist <- data.frame(
+ Region = levels(train_region$region_nombre),
+ Entrenamiento = as.numeric(table(train_region$region_nombre)),
+ Entrenamiento_pct = round(100 * as.numeric(table(train_region$region_nombre)) / nrow(train_data), 1),
+ Prueba = as.numeric(table(test_region$region_nombre)),
+ Prueba_pct = round(100 * as.numeric(table(test_region$region_nombre)) / nrow(test_data), 1)
+)
+
+kbl(region_dist,
+   caption = "Distribución por región en conjuntos de entrenamiento y prueba",
+   col.names = c("Región", "Entrenamiento (n)", "Entrenamiento (%)", "Prueba (n)", "Prueba (%)")) %>%
+ kable_styling(bootstrap_options = c("striped", "hover"))
+
+if (!dir.exists("data/processed")) dir.create("data/processed", recursive = TRUE)
 saveRDS(train_data, "data/processed/train_data.rds")
 saveRDS(test_data, "data/processed/test_data.rds")
-
-
 ```
 
 ## Entrenamiento del modelo
@@ -1502,7 +1515,7 @@ saveRDS(rf_model, "data/processed/rf_model.rds")
 
 ## Evaluación del modelo
 
-El nivel educacional emerge como el predictor más potente, particularmente la distinción entre educación universitaria/postgrado y el resto. La región de residencia es el segundo factor más importante, reflejando la marcada concentración territorial de la elite. La edad muestra una importancia moderada, con un peak de probabilidad entre 30-40 años.
+El nivel educacional es el predictor más potente, particularmente el clivaje entre educación universitaria/postgrado y el resto. La región de residencia es el segundo factor más importante, reflejando la marcada concentración territorial de la elite. La edad muestra una importancia moderada, con un peak de probabilidad entre 30-40 años.
 
 Falsos Negativos (3.75% de los casos): Mayor concentración en regiones mineras.
 Falsos Positivos (2.23% de los casos): Mayor concentración en RM.
@@ -1594,40 +1607,47 @@ kable(error_summary,
 
 # Análisis por región
 error_by_region <- error_analysis %>%
-  mutate(region = test_data$region[id]) %>%
-  group_by(region, error_type) %>%
-  summarise(count = n(), .groups = 'drop') %>%
-  pivot_wider(names_from = error_type, 
-              values_from = count, 
-              values_fill = 0)
+ mutate(
+   region = factor(test_data$region[id],
+                  levels = c("15", "1", "2", "3", "4", "5", "13", "6", 
+                           "7", "8", "16", "9", "14", "10", "11", "12"),
+                  labels = nombres_regiones[c("15", "1", "2", "3", "4", "5", "13", "6", 
+                                            "7", "8", "16", "9", "14", "10", "11", "12")])
+ ) %>%
+ group_by(region, error_type) %>%
+ summarise(count = n(), .groups = 'drop') %>%
+ pivot_wider(names_from = error_type, 
+             values_from = count, 
+             values_fill = 0)
 
-# Mostrar distribución de errores por región con kable
+# Mostrar distribución de errores por región 
 kable(error_by_region,
-      caption = "Distribución de errores por región") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+     caption = "Distribución de errores por región",
+     col.names = c("Región", "Correcto", "Falso Negativo", "Falso Positivo")) %>%
+ kable_styling(bootstrap_options = c("striped", "hover"))
 
 # Visualización de distribución de errores
 ggplot(error_analysis, aes(x = prob_elite, fill = error_type)) +
-  geom_histogram(bins = 30, alpha = 0.7) +
-  facet_wrap(~error_type, scales = "free_y") +
-  scale_fill_manual(values = c(
-    "Correcto" = "steelblue",
-    "Falso Negativo" = "darkred",
-    "Falso Positivo" = "orange"
-  )) +
-  theme_minimal() +
-  labs(
-    title = "Distribución de probabilidades predichas por tipo de error",
-    subtitle = "Análisis de errores de clasificación",
-    x = "Probabilidad predicha de pertenecer al 10% superior",
-    y = "Frecuencia"
-  ) +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    plot.subtitle = element_text(size = 12),
-    strip.text = element_text(size = 11),
-    legend.position = "bottom"
-  )
+ geom_histogram(bins = 30, alpha = 0.7) +
+ facet_wrap(~error_type, scales = "free_y") +
+ scale_fill_manual(values = c(
+   "Correcto" = "steelblue",
+   "Falso Negativo" = "darkred",
+   "Falso Positivo" = "orange"
+ )) +
+ theme_minimal() +
+ labs(
+   title = "Distribución de probabilidades predichas por tipo de error",
+   subtitle = "Análisis de errores de clasificación",
+   x = "Probabilidad predicha de pertenecer al 10% superior",
+   y = "Frecuencia"
+ ) +
+ theme(
+   plot.title = element_text(size = 14, face = "bold"),
+   plot.subtitle = element_text(size = 12),
+   strip.text = element_text(size = 11),
+   legend.position = "bottom"
+ )
 ```
 
 ## Conclusiones generales:

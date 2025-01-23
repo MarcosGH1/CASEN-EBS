@@ -2996,7 +2996,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Análisis del 10% de mayores ingresos en
 Chile</h1>
 <h4 class="author">Marcos González, Agustín Rabie</h4>
-<h4 class="date">22 January, 2025</h4>
+<h4 class="date">23 January, 2025</h4>
 
 </div>
 
@@ -3368,8 +3368,8 @@ distribución del ingreso.</li>
 <li>CARACTERÍSTICAS: Atributos del individuo (sea o no jefe/a de
 hogar).</li>
 </ul>
-<div id="htmlwidget-fe297cd682026fb325db" style="width:800px;height:500px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-fe297cd682026fb325db">{"x":{"diagram":"\n  digraph ER {\n    # Configuración general del gráfico\n    graph [rankdir = TB, \n           fontname = \"Helvetica\",\n           nodesep = 0.4,\n           ranksep = 0.6]\n           \n    # Configuración de nodos\n    node [shape = rectangle, \n          style = filled, \n          fillcolor = lightblue, \n          fontname = \"Helvetica\",\n          fontsize = 10,\n          width = 2,\n          height = 0.5]\n          \n    # Configuración de bordes\n    edge [fontname = \"Helvetica\",\n          fontsize = 8,\n          len = 1.2]\n\n    # Entidades principales\n    region [label = \"REGIÓN\n{id_region}\n(nombre)\", width = 2]\n    hogar [label = \"HOGAR\n{folio_casen}\n(ingresos_totales, n_integrantes,\ntipo_vivienda, tenencia)\", width = 3]\n    individuo [label = \"INDIVIDUO\n{id_persona_casen}\n(edad, sexo, elite)\", width = 2.5]\n\n    # Atributos como subentidades\n    educacion [label = \"CARACTERÍSTICAS EDUCATIVAS\n(nivel, años)\", width = 2.5]\n    trabajo [label = \"CARACTERÍSTICAS LABORALES\n(ocupación, categoría, cotización)\", width = 2.5]\n    bienestar [label = \"BIENESTAR\n(uso tiempo, satisfacción,\nredes sociales)\", width = 2.5]\n\n    # Relaciones\n    region -> hogar [label = \"contiene\"]\n    hogar -> individuo [label = \"compuesto por\"]\n    \n    # Relaciones con atributos\n    individuo -> educacion [label = \"tiene\"]\n    individuo -> trabajo [label = \"tiene\"]\n    individuo -> bienestar [label = \"tiene\"]\n\n    # Alineación y espaciado\n    {rank = same; educacion; trabajo; bienestar}\n    \n    # Nota explicativa\n    nota [label = \"Variable objetivo:\nelite (1: pertenece al 10% superior, 0: resto)\", \n          shape = note, \n          fillcolor = lightyellow,\n          width = 3]\n    nota -> hogar [style = dashed]\n  }\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-823eb359678c06a1a93a" style="width:800px;height:500px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-823eb359678c06a1a93a">{"x":{"diagram":"\n  digraph ER {\n    # Configuración general del gráfico\n    graph [rankdir = TB, \n           fontname = \"Helvetica\",\n           nodesep = 0.4,\n           ranksep = 0.6]\n           \n    # Configuración de nodos\n    node [shape = rectangle, \n          style = filled, \n          fillcolor = lightblue, \n          fontname = \"Helvetica\",\n          fontsize = 10,\n          width = 2,\n          height = 0.5]\n          \n    # Configuración de bordes\n    edge [fontname = \"Helvetica\",\n          fontsize = 8,\n          len = 1.2]\n\n    # Entidades principales\n    region [label = \"REGIÓN\n{id_region}\n(nombre)\", width = 2]\n    hogar [label = \"HOGAR\n{folio_casen}\n(ingresos_totales, n_integrantes,\ntipo_vivienda, tenencia)\", width = 3]\n    individuo [label = \"INDIVIDUO\n{id_persona_casen}\n(edad, sexo, elite)\", width = 2.5]\n\n    # Atributos como subentidades\n    educacion [label = \"CARACTERÍSTICAS EDUCATIVAS\n(nivel, años)\", width = 2.5]\n    trabajo [label = \"CARACTERÍSTICAS LABORALES\n(ocupación, categoría, cotización)\", width = 2.5]\n    bienestar [label = \"BIENESTAR\n(uso tiempo, satisfacción,\nredes sociales)\", width = 2.5]\n\n    # Relaciones\n    region -> hogar [label = \"contiene\"]\n    hogar -> individuo [label = \"compuesto por\"]\n    \n    # Relaciones con atributos\n    individuo -> educacion [label = \"tiene\"]\n    individuo -> trabajo [label = \"tiene\"]\n    individuo -> bienestar [label = \"tiene\"]\n\n    # Alineación y espaciado\n    {rank = same; educacion; trabajo; bienestar}\n    \n    # Nota explicativa\n    nota [label = \"Variable objetivo:\nelite (1: pertenece al 10% superior, 0: resto)\", \n          shape = note, \n          fillcolor = lightyellow,\n          width = 3]\n    nota -> hogar [style = dashed]\n  }\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="análisis-descriptivo-inicial" class="section level2">
 <h2>Análisis descriptivo inicial</h2>
@@ -6099,293 +6099,293 @@ Distribución por región en conjuntos de entrenamiento y prueba
 <thead>
 <tr>
 <th style="text-align:left;">
-Region
-</th>
-<th style="text-align:left;">
-Entrenamiento.Var1
+Región
 </th>
 <th style="text-align:right;">
-Entrenamiento.Freq
-</th>
-<th style="text-align:left;">
-Prueba.Var1
+Entrenamiento (n)
 </th>
 <th style="text-align:right;">
-Prueba.Freq
+Entrenamiento (%)
+</th>
+<th style="text-align:right;">
+Prueba (n)
+</th>
+<th style="text-align:right;">
+Prueba (%)
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:right;">
-444
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:right;">
-179
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-2
-</td>
-<td style="text-align:left;">
-10
-</td>
-<td style="text-align:right;">
-436
-</td>
-<td style="text-align:left;">
-10
-</td>
-<td style="text-align:right;">
-197
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-3
-</td>
-<td style="text-align:left;">
-11
-</td>
-<td style="text-align:right;">
-423
-</td>
-<td style="text-align:left;">
-11
-</td>
-<td style="text-align:right;">
-195
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-4
-</td>
-<td style="text-align:left;">
-12
-</td>
-<td style="text-align:right;">
-447
-</td>
-<td style="text-align:left;">
-12
-</td>
-<td style="text-align:right;">
-162
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-5
-</td>
-<td style="text-align:left;">
-13
-</td>
-<td style="text-align:right;">
-778
-</td>
-<td style="text-align:left;">
-13
-</td>
-<td style="text-align:right;">
-360
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-6
-</td>
-<td style="text-align:left;">
-14
-</td>
-<td style="text-align:right;">
-445
-</td>
-<td style="text-align:left;">
-14
-</td>
-<td style="text-align:right;">
-186
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-7
-</td>
-<td style="text-align:left;">
-15
+Arica y Parinacota
 </td>
 <td style="text-align:right;">
 456
 </td>
-<td style="text-align:left;">
-15
+<td style="text-align:right;">
+6.0
 </td>
 <td style="text-align:right;">
 161
 </td>
-</tr>
-<tr>
-<td style="text-align:left;">
-8
-</td>
-<td style="text-align:left;">
-16
-</td>
 <td style="text-align:right;">
-447
-</td>
-<td style="text-align:left;">
-16
-</td>
-<td style="text-align:right;">
-198
+4.9
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-9
+Tarapacá
 </td>
+<td style="text-align:right;">
+444
+</td>
+<td style="text-align:right;">
+5.8
+</td>
+<td style="text-align:right;">
+179
+</td>
+<td style="text-align:right;">
+5.5
+</td>
+</tr>
+<tr>
 <td style="text-align:left;">
-2
+Antofagasta
 </td>
 <td style="text-align:right;">
 438
 </td>
-<td style="text-align:left;">
-2
+<td style="text-align:right;">
+5.7
 </td>
 <td style="text-align:right;">
 185
 </td>
+<td style="text-align:right;">
+5.6
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-10
-</td>
-<td style="text-align:left;">
-3
+Atacama
 </td>
 <td style="text-align:right;">
 424
 </td>
-<td style="text-align:left;">
-3
+<td style="text-align:right;">
+5.5
 </td>
 <td style="text-align:right;">
 197
 </td>
+<td style="text-align:right;">
+6.0
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-11
-</td>
-<td style="text-align:left;">
-4
+Coquimbo
 </td>
 <td style="text-align:right;">
 427
 </td>
-<td style="text-align:left;">
-4
+<td style="text-align:right;">
+5.6
 </td>
 <td style="text-align:right;">
 196
 </td>
+<td style="text-align:right;">
+6.0
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-12
-</td>
-<td style="text-align:left;">
-5
+Valparaíso
 </td>
 <td style="text-align:right;">
 606
 </td>
-<td style="text-align:left;">
-5
+<td style="text-align:right;">
+7.9
 </td>
 <td style="text-align:right;">
 245
 </td>
+<td style="text-align:right;">
+7.5
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-13
+Metropolitana
 </td>
+<td style="text-align:right;">
+778
+</td>
+<td style="text-align:right;">
+10.2
+</td>
+<td style="text-align:right;">
+360
+</td>
+<td style="text-align:right;">
+11.0
+</td>
+</tr>
+<tr>
 <td style="text-align:left;">
-6
+O’Higgins
 </td>
 <td style="text-align:right;">
 448
 </td>
-<td style="text-align:left;">
-6
+<td style="text-align:right;">
+5.9
 </td>
 <td style="text-align:right;">
 196
 </td>
+<td style="text-align:right;">
+6.0
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-14
-</td>
-<td style="text-align:left;">
-7
+Maule
 </td>
 <td style="text-align:right;">
 436
 </td>
-<td style="text-align:left;">
-7
+<td style="text-align:right;">
+5.7
 </td>
 <td style="text-align:right;">
 184
 </td>
+<td style="text-align:right;">
+5.6
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-15
-</td>
-<td style="text-align:left;">
-8
+Biobío
 </td>
 <td style="text-align:right;">
 536
 </td>
-<td style="text-align:left;">
-8
+<td style="text-align:right;">
+7.0
 </td>
 <td style="text-align:right;">
 225
 </td>
+<td style="text-align:right;">
+6.9
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
-16
+Ñuble
 </td>
+<td style="text-align:right;">
+447
+</td>
+<td style="text-align:right;">
+5.8
+</td>
+<td style="text-align:right;">
+198
+</td>
+<td style="text-align:right;">
+6.0
+</td>
+</tr>
+<tr>
 <td style="text-align:left;">
-9
+Araucanía
 </td>
 <td style="text-align:right;">
 454
 </td>
-<td style="text-align:left;">
-9
+<td style="text-align:right;">
+5.9
 </td>
 <td style="text-align:right;">
 210
+</td>
+<td style="text-align:right;">
+6.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Los Ríos
+</td>
+<td style="text-align:right;">
+445
+</td>
+<td style="text-align:right;">
+5.8
+</td>
+<td style="text-align:right;">
+186
+</td>
+<td style="text-align:right;">
+5.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Los Lagos
+</td>
+<td style="text-align:right;">
+436
+</td>
+<td style="text-align:right;">
+5.7
+</td>
+<td style="text-align:right;">
+197
+</td>
+<td style="text-align:right;">
+6.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aysén
+</td>
+<td style="text-align:right;">
+423
+</td>
+<td style="text-align:right;">
+5.5
+</td>
+<td style="text-align:right;">
+195
+</td>
+<td style="text-align:right;">
+6.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Magallanes
+</td>
+<td style="text-align:right;">
+447
+</td>
+<td style="text-align:right;">
+5.8
+</td>
+<td style="text-align:right;">
+162
+</td>
+<td style="text-align:right;">
+4.9
 </td>
 </tr>
 </tbody>
@@ -6585,12 +6585,11 @@ gini
 </div>
 <div id="evaluación-del-modelo" class="section level2">
 <h2>Evaluación del modelo</h2>
-<p>El nivel educacional emerge como el predictor más potente,
-particularmente la distinción entre educación universitaria/postgrado y
-el resto. La región de residencia es el segundo factor más importante,
-reflejando la marcada concentración territorial de la elite. La edad
-muestra una importancia moderada, con un peak de probabilidad entre
-30-40 años.</p>
+<p>El nivel educacional es el predictor más potente, particularmente el
+clivaje entre educación universitaria/postgrado y el resto. La región de
+residencia es el segundo factor más importante, reflejando la marcada
+concentración territorial de la elite. La edad muestra una importancia
+moderada, con un peak de probabilidad entre 30-40 años.</p>
 <p>Falsos Negativos (3.75% de los casos): Mayor concentración en
 regiones mineras. Falsos Positivos (2.23% de los casos): Mayor
 concentración en RM.</p>
@@ -6810,7 +6809,7 @@ Distribución de errores por región
 <thead>
 <tr>
 <th style="text-align:left;">
-region
+Región
 </th>
 <th style="text-align:right;">
 Correcto
@@ -6826,91 +6825,7 @@ Falso Positivo
 <tbody>
 <tr>
 <td style="text-align:left;">
-1
-</td>
-<td style="text-align:right;">
-164
-</td>
-<td style="text-align:right;">
-12
-</td>
-<td style="text-align:right;">
-3
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-10
-</td>
-<td style="text-align:right;">
-185
-</td>
-<td style="text-align:right;">
-6
-</td>
-<td style="text-align:right;">
-6
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-11
-</td>
-<td style="text-align:right;">
-185
-</td>
-<td style="text-align:right;">
-7
-</td>
-<td style="text-align:right;">
-3
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-12
-</td>
-<td style="text-align:right;">
-154
-</td>
-<td style="text-align:right;">
-6
-</td>
-<td style="text-align:right;">
-2
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-13
-</td>
-<td style="text-align:right;">
-314
-</td>
-<td style="text-align:right;">
-20
-</td>
-<td style="text-align:right;">
-26
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-14
-</td>
-<td style="text-align:right;">
-179
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-5
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-15
+Arica y Parinacota
 </td>
 <td style="text-align:right;">
 149
@@ -6924,13 +6839,13 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-16
+Tarapacá
 </td>
 <td style="text-align:right;">
-188
+164
 </td>
 <td style="text-align:right;">
-7
+12
 </td>
 <td style="text-align:right;">
 3
@@ -6938,7 +6853,7 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-2
+Antofagasta
 </td>
 <td style="text-align:right;">
 168
@@ -6952,7 +6867,7 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-3
+Atacama
 </td>
 <td style="text-align:right;">
 188
@@ -6966,7 +6881,7 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-4
+Coquimbo
 </td>
 <td style="text-align:right;">
 187
@@ -6980,7 +6895,7 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-5
+Valparaíso
 </td>
 <td style="text-align:right;">
 232
@@ -6994,7 +6909,21 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-6
+Metropolitana
+</td>
+<td style="text-align:right;">
+314
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+26
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+O’Higgins
 </td>
 <td style="text-align:right;">
 192
@@ -7008,7 +6937,7 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-7
+Maule
 </td>
 <td style="text-align:right;">
 176
@@ -7022,7 +6951,7 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-8
+Biobío
 </td>
 <td style="text-align:right;">
 216
@@ -7036,7 +6965,21 @@ Falso Positivo
 </tr>
 <tr>
 <td style="text-align:left;">
-9
+Ñuble
+</td>
+<td style="text-align:right;">
+188
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Araucanía
 </td>
 <td style="text-align:right;">
 203
@@ -7046,6 +6989,62 @@ Falso Positivo
 </td>
 <td style="text-align:right;">
 1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Los Ríos
+</td>
+<td style="text-align:right;">
+179
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Los Lagos
+</td>
+<td style="text-align:right;">
+185
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aysén
+</td>
+<td style="text-align:right;">
+185
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Magallanes
+</td>
+<td style="text-align:right;">
+154
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+2
 </td>
 </tr>
 </tbody>

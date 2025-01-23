@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.16)  22 JAN 2025 23:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.16)  23 JAN 2025 12:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -693,13 +693,15 @@ Overfull \hbox (85.03297pt too wide) in paragraph at lines 754--777
 
 [15]
 
-[16] [17]
+[16]
+
+[17]
 
 [18]
 <index_files/figure-latex/model_evaluation-1.pdf, id=207, 722.7pt x 433.62pt>
 File: index_files/figure-latex/model_evaluation-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/model_evaluation-1.pdf>
-Package pdftex.def Info: index_files/figure-latex/model_evaluation-1.pdf  used on input line 1082.
+Package pdftex.def Info: index_files/figure-latex/model_evaluation-1.pdf  used on input line 1104.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
 
 
@@ -707,7 +709,7 @@ Package pdftex.def Info: index_files/figure-latex/model_evaluation-1.pdf  used o
 <index_files/figure-latex/error_analysis-1.pdf, id=222, 722.7pt x 433.62pt>
 File: index_files/figure-latex/error_analysis-1.pdf Graphic file (type pdf)
 <use index_files/figure-latex/error_analysis-1.pdf>
-Package pdftex.def Info: index_files/figure-latex/error_analysis-1.pdf  used on input line 1156.
+Package pdftex.def Info: index_files/figure-latex/error_analysis-1.pdf  used on input line 1178.
 (pdftex.def)             Requested size: 469.76045pt x 281.85628pt.
 
 
@@ -725,15 +727,15 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 13021 strings out of 475178
- 206817 string characters out of 5763815
- 634314 words of memory out of 5000000
- 35705 multiletter control sequences out of 15000+600000
+ 13019 strings out of 475178
+ 206808 string characters out of 5763815
+ 634211 words of memory out of 5000000
+ 35703 multiletter control sequences out of 15000+600000
  605675 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,9n,93p,759b,595s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/marcosgonzalezhernando/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on index.pdf (22 pages, 5403562 bytes).
+Output written on index.pdf (22 pages, 5405124 bytes).
 PDF statistics:
  365 PDF objects out of 1000 (max. 8388607)
  302 compressed objects within 4 object streams
