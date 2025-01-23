@@ -3,8 +3,6 @@ title: "Análisis del 10% de mayores ingresos en Chile"
 author: "Marcos González, Agustín Rabie"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document:
-    toc: true
   html_document:
     theme: flatly
     highlight: tango
@@ -12,6 +10,8 @@ output:
     toc_float: true
     code_folding: hide
     output_file: index.html
+  pdf_document:
+    toc: true
 ---
 
 ## Abstract
@@ -1348,8 +1348,7 @@ saveRDS(model_data_imputed, "data/processed/model_data_imputed.rds")
 ## Partición de datos
 
 Estratificación:
-Se usa createDataPartition para mantener la proporción de la variable objetivo (9% elite)
-La proporción 70-30 equilibra tamaño de entrenamiento y validación confiable.
+Se usa createDataPartition para mantener la proporción de la variable objetivo (9% elite). La proporción 70-30 equilibra tamaño de entrenamiento y validación confiable.
 
 Los resultados muestran que se mantuvo la proporción:
 Muestra original: 10,921 casos
@@ -1360,10 +1359,8 @@ Prueba: 8.9% elite (292/3,276)
 Configuración del modelo:
 Se utiliza una estrategia de validación que divide los datos en tres partes para asegurar que el modelo aprende bien sin tomar demasiado tiempo en procesar (iteraciones anteriores duraron más de media hora). Como hay muchos más casos fuera del 10% superior que dentro, se ajustan los pesos para que el modelo preste igual atención a ambos grupos. Además, se configura el modelo para que nos dé no solo predicciones simples (sí/no) sino también la probabilidad de pertenecer al grupo elite, lo que nos permite evaluar qué tan seguro está de sus predicciones.
 
-Decisiones sobre hiperparámetros:
 Se prueba el modelo con diferentes configuraciones: primero, dejándolo considerar 3 o 5 variables cada vez que toma una decisión (esto ayuda a que no se concentre demasiado en unas pocas características). También se prueba qué tan pequeños pueden ser los grupos que forma (3 o 10 casos como mínimo) para encontrar un balance entre aprender patrones detallados y no sobre-ajustarse a casos particulares. Para tomar estas decisiones, se usa un método (llamado gini) que funciona bien cuando un grupo es mucho más pequeño que el otro, como es nuestro caso con el 10% superior.
 
-Monitoreo de representatividad regional:
 Los resultados muestran que se mantiene la distribución regional en ambos conjuntos, crucial dado el componente territorial del análisis.
 
 ```{r}
@@ -1428,20 +1425,16 @@ Precisión General:
 El modelo acierta en el 94% de los casos (Accuracy = 0.940). El área bajo la curva ROC de 0.939 indica una excelente capacidad discriminativa. Estos números sugieren que la pertenencia al 10% superior es altamente predecible a partir de las variables seleccionadas.
 
 Detección de Elite:
-El modelo identifica correctamente al 97.6% de quienes realmente pertenecen al 10% superior
-Este alto porcentaje sugiere que la elite económica tiene características distintivas muy marcadas La baja tasa de falsos negativos (2.4%) indica que es raro que el modelo "se pierda" a alguien del 10% superior
+El modelo identifica correctamente al 97.6% de quienes realmente pertenecen al 10% superior. Este alto porcentaje sugiere que la elite económica tiene características distintivas muy marcadas La baja tasa de falsos negativos (2.4%) indica que es raro que el modelo "se pierda" a alguien del 10% superior
 
 Falsos Positivos:
 La especificidad de 57.9% indica que el modelo tiende a sobreidentificar potenciales miembros de la elite. Aproximadamente el 42% de personas clasificadas como del 10% superior por el modelo no lo son Esto sugiere la existencia de un grupo significativo que comparte características pero no alcanza el umbral de ingresos.
 
-Implicaciones Sociológicas:
-La alta predictibilidad sugiere barreras significativas entre grupos socioeconómicos
-Los falsos positivos podrían representar un "grupo aspiracional" con capital cultural/educacional similar a la elite pero menor ingreso. La precisión territorial del modelo confirma la importancia de la segregación espacial.
+Implicancias y limitaciones:
+La alta predictibilidad sugiere barreras significativas entre grupos socioeconómicos.
+Los falsos positivos podrían representar un grupo con educación similar a la elite pero menor ingreso. La precisión territorial del modelo confirma la importancia de la segregación espacial. El modelo es mejor identificando quién sí pertenece a la elite que quién no. La tendencia a falsos positivos sugiere que las características asociadas a la elite no garantizan la pertenencia a ella.
 
-Limitaciones y Alcances:
-El modelo es mejor identificando quién sí pertenece a la elite que quién no. La tendencia a falsos positivos sugiere que las características asociadas a la elite no garantizan la pertenencia a ella.
-
-Estos resultados tienen implicaciones importantes para entender la reproducción de la desigualdad en Chile. La alta capacidad predictiva del modelo sugiere que la pertenencia al 10% superior está fuertemente estructurada por una combinación de factores sociales, educativos y territoriales. El patrón de errores del modelo también es informativo: es más propenso a "sobreidentificar" que a "subidentificar". 
+Estos resultados tienen implicaciones importantes para entender la reproducción de la desigualdad en Chile. La alta capacidad predictiva del modelo sugiere que la pertenencia al 10% superior está fuertemente estructurada por una combinación de factores sociales, educativos y territoriales. El patrón de errores del modelo también es informativo: es más propenso a "sobreidentificar" que a "subidentificar".
 
 ```{r training_model}
 predictors <- c(
@@ -1511,14 +1504,8 @@ saveRDS(rf_model, "data/processed/rf_model.rds")
 
 El nivel educacional emerge como el predictor más potente, particularmente la distinción entre educación universitaria/postgrado y el resto. La región de residencia es el segundo factor más importante, reflejando la marcada concentración territorial de la elite. La edad muestra una importancia moderada, con un peak de probabilidad entre 30-40 años.
 
-Falsos Negativos (3.75% de los casos):
-Típicamente profesionales jóvenes con alta educación pero en regiones
-Personas con postgrado pero en sectores académicos o públicos
-
-Falsos Positivos (2.23% de los casos):
-Concentrados en personas con educación universitaria en RM
-Presentes en sectores con alta valoración educativa pero menores ingresos (educación, cultura)
-
+Falsos Negativos (3.75% de los casos): Mayor concentración en regiones mineras.
+Falsos Positivos (2.23% de los casos): Mayor concentración en RM.
 
 ```{r model_evaluation}
 predictions <- predict(rf_model, newdata = test_data)
@@ -1558,22 +1545,13 @@ ggroc(roc_obj) +
 var_imp <- vip(rf_model)
 ```
 
-Patrones Territoriales de Error:
-Región Metropolitana: Mayor concentración de falsos positivos.
-Antofagasta, Tarapacá: Mayor proporción de falsos negativos.
-
-La dominancia de factores educativos sugiere la persistencia de barreras educacionales
-Los patrones territoriales reflejan la necesidad de desarrollo regional más equilibrado
-Los falsos positivos indican potenciales "bolsones" de subvaloración profesional
-
-Este análisis sugiere que la pertenencia al 10% superior en Chile está fuertemente estructurada por la combinación de educación y territorio, con la edad jugando un rol moderador. Los errores del modelo iluminan casos donde esta estructura se rompe, sea por rutas alternativas de acceso a altos ingresos o por barreras que impiden que el capital educativo se traduzca en retornos económicos equiparables.
+Este análisis sugiere que la pertenencia al 10% superior en Chile está fuertemente estructurada por la combinación de educación y territorio, con la edad jugando un rol moderador. Los errores del modelo iluminan casos donde esta estructura se rompe, sea por rutas alternativas de acceso a altos ingresos (regiones mineras) o por barreras que impiden que el capital educativo se traduzca en retornos económicos equiparables (RM).
 
 Variables de bienestar:
 Muestran una importancia moderada pero reveladora en el modelo. El logro de metas y el apoyo a la empleabilidad emergen como los predictores más importantes. La interferencia doméstica y el balance trabajo-vida muestran una importancia menor pero significativa. El indicador de missing en variables de bienestar resultó ser en sí mismo predictivo
 
 Patrones Identificados:
-Mayor bienestar subjetivo se asocia con mayor probabilidad de pertenecer al 10% superior
-Los falsos positivos del modelo (personas predichas como elite pero que no lo son) tienden a mostrar niveles de bienestar similares a la elite real. La flexibilidad laboral y el control sobre el tiempo muestran una relación no lineal con la pertenencia al grupo elite.
+Mayor bienestar subjetivo se asocia con mayor probabilidad de pertenecer al 10% superior. Los falsos positivos del modelo (personas predichas como elite pero que no lo son) tienden a mostrar niveles de bienestar similares a la elite real. La flexibilidad laboral y el control sobre el tiempo muestran una relación no lineal con la pertenencia al grupo elite.
 
 Las variables de bienestar laboral y uso del tiempo solo aplican a personas ocupadas. No son "no respuestas" sino "no aplica" para personas fuera del mercado laboral. Esto significa que los missing no son aleatorios sino que están estructuralmente relacionados con la situación laboral.
 
