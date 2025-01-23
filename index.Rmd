@@ -1167,111 +1167,95 @@ Variables adicionales de bienestar:
 Se mantiene la coherencia en la estandarización para satisfacción_tiempo, logro_metas e interferencia_domestica. flexibilidad_ausencias se trata diferente por ser binaria.
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
-# Preparar datos para modelamiento
-model_data <- merged_data %>%
+model_data <- readRDS("data/processed/model_data.rds")
+
+# Crear variable bienestar_missing
+model_data <- model_data %>%
   mutate(
-    # Variables categóricas básicas
-    sexo = factor(sexo, levels = c(1, 2), labels = c("Hombre", "Mujer")),
-    zona = factor(zona, levels = c(1, 2), labels = c("Urbana", "Rural")),
-    region = factor(region),
-    
-    # Variable educativa
-    educ_rec = case_when(
-      e6a %in% c(1, 5, 6, 7) ~ "Hasta básica",
-      e6a %in% c(8, 9, 10, 11) ~ "Hasta media",
-      e6a %in% c(12, 13) ~ "Técnica superior",
-      e6a %in% c(14, 15) ~ "Universitaria",
-      e6a %in% c(16, 17) ~ "Postgrado",
-      TRUE ~ NA_character_
-    ) %>% factor(),
-    
-    # Tenencia de vivienda
-    tenencia_vivienda = case_when(
-      v13 == 1 & v13_propia == 1 ~ "Propia pagada",
-      v13 == 1 & v13_propia == 2 ~ "Propia pagándose",
-      v13 == 1 & v13_propia == 3 ~ "Propia compartida (pagada)",
-      v13 == 1 & v13_propia == 4 ~ "Propia compartida (pagándose)",
-      v13 == 2 ~ "Arrendada",
-      v13 == 3 ~ "Cedida",
-      v13 == 9 ~ "Usufructo",
-      v13 == 10 ~ "Ocupación irregular",
-      v13 == 11 ~ "Poseedor irregular",
-      TRUE ~ "Sin información"
-    ) %>% factor(),
-    
-    # Variables de bienestar (estandarizadas)
-    apoyo_empleabilidad = scale(case_when(
-      j3a_1 %in% 1:5 ~ j3a_1,
-      TRUE ~ NA_real_
-    ))[,1],
-    
-    balance_trabajo_vida = scale(case_when(
-      j3a_4 %in% 1:5 ~ j3a_4,
-      TRUE ~ NA_real_
-    ))[,1],
-    
-    satisfaccion_tiempo = scale(case_when(
-      a3_4 %in% 1:5 ~ a3_4,
-      TRUE ~ NA_real_
-    ))[,1],
-    
-    logro_metas = scale(case_when(
-      j3a_5 %in% 1:5 ~ j3a_5,
-      TRUE ~ NA_real_
-    ))[,1],
-    
-    interferencia_domestica = scale(case_when(
-      c6 %in% 1:5 ~ c6,
-      TRUE ~ NA_real_
-    ))[,1],
-    
-    flexibilidad_ausencias = case_when(
-      c3_2 == 1 ~ 1,  # Sí
-      c3_2 == 2 ~ 0,  # No
-      TRUE ~ NA_real_
-    ),
-    
-    # Variable objetivo
-    elite = factor(elite, levels = c(0, 1), labels = c("No", "Si"))
+    bienestar_missing = case_when(
+      is.na(apoyo_empleabilidad) | 
+      is.na(balance_trabajo_vida) |
+      is.na(satisfaccion_tiempo) |
+      is.na(logro_metas) |
+      is.na(interferencia_domestica) |
+      is.na(flexibilidad_ausencias) ~ 1,
+      TRUE ~ 0
+    )
   )
 
-# Verificar estructura preliminar
-glimpse(model_data)
-
-# Definir variables para el modelo
+# Variables predictoras
 predictors <- c(
   # Variables sociodemográficas
   "edad", "sexo", "zona", "region",
-  
   # Variables educativas y de vivienda
   "educ_rec", "tenencia_vivienda",
-  
   # Variables de bienestar
   "apoyo_empleabilidad", "balance_trabajo_vida",
   "satisfaccion_tiempo", "logro_metas",
-  "interferencia_domestica", "flexibilidad_ausencias"
+  "interferencia_domestica", "flexibilidad_ausencias",
+  # Indicador de missing
+  "bienestar_missing"
 )
 
-# Verificar existencia de variables
-missing_vars <- setdiff(predictors, names(model_data))
-if(length(missing_vars) > 0) {
-  stop("Variables faltantes: ", paste(missing_vars, collapse = ", "))
-}
+# Partición de datos
+set.seed(123)
+train_index <- createDataPartition(
+ y = model_data$elite,
+ p = 0.7,
+ list = FALSE
+)
+train_data <- model_data[train_index, ]
+test_data <- model_data[-train_index, ]
 
-# Seleccionar variables finales
-model_data_final <- model_data %>%
-  select(all_of(c(predictors, "elite")))
+# Configuración del modelo
+ctrl <- trainControl(
+ method = "cv",
+ number = 3,
+ classProbs = TRUE,
+ summaryFunction = twoClassSummary,
+ savePredictions = TRUE,
+ sampling = "up"
+)
 
-# Guardar datos procesados
-saveRDS(model_data_final, "data/processed/model_data.rds")
+hyper_grid <- expand.grid(
+ mtry = c(3, 5),
+ min.node.size = c(3, 10),
+ splitrule = "gini"
+)
 
-# Tabla
-kable(missing_summary,
-      caption = "Resumen de valores faltantes",
-      col.names = c("Variable", "N Missing", "% Missing", "Total Obs", "Obs. Disponibles"),
-      digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover")) %>%
-  scroll_box(width = "100%")
+# Modelo sin pesos
+set.seed(123)
+rf_model_unweighted <- train(
+ x = train_data[, predictors],
+ y = train_data$elite,
+ method = "ranger",
+ trControl = ctrl,
+ tuneGrid = hyper_grid,
+ num.trees = 1000,
+ importance = "permutation",
+ metric = "ROC"
+)
+
+# Modelo con pesos
+weighted_model <- ranger(
+ formula = elite ~ .,
+ data = train_data[, c(predictors, "elite")],
+ num.trees = 1000,
+ mtry = rf_model_unweighted$bestTune$mtry,
+ min.node.size = rf_model_unweighted$bestTune$min.node.size,
+ probability = TRUE,
+ case.weights = train_data$fexp
+)
+
+# Mostrar resultados del modelo sin pesos
+kbl(rf_model_unweighted$results,
+   caption = "Resultados del modelo sin pesos",
+   digits = 3) %>%
+ kable_styling(bootstrap_options = c("striped", "hover"))
+
+# Guardar modelos
+saveRDS(rf_model_unweighted, "data/processed/rf_model_unweighted.rds")
+saveRDS(weighted_model, "data/processed/rf_model_weighted.rds")
 ```
 
 ## Manejo de valores faltantes
@@ -1521,44 +1505,46 @@ Falsos Negativos (3.75% de los casos): Mayor concentración en regiones mineras.
 Falsos Positivos (2.23% de los casos): Mayor concentración en RM.
 
 ```{r model_evaluation}
-predictions <- predict(rf_model, newdata = test_data)
-pred_probs <- predict(rf_model, newdata = test_data, type = "prob")
+predictions_unw <- predict(rf_model_unweighted, newdata = test_data)
+pred_probs_unw <- predict(rf_model_unweighted, newdata = test_data, type = "prob")
 
-# Matriz de confusión y convertir a kable
-conf_matrix <- confusionMatrix(predictions, test_data$elite)
-conf_table <- as.data.frame(conf_matrix$table)
-kable(conf_table, 
-      caption = "Matriz de confusión") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+predictions_w <- predict(weighted_model, data = test_data)$predictions
+pred_probs_w <- predictions_w[,"Si"]
 
-# Métricas de rendimiento
-metrics <- data.frame(
-  Métrica = c("Accuracy", "Sensitivity", "Specificity", "AUC"),
-  Valor = c(
-    conf_matrix$overall["Accuracy"],
-    conf_matrix$byClass["Sensitivity"],
-    conf_matrix$byClass["Specificity"],
-    auc(roc(as.numeric(test_data$elite == "Si"), pred_probs[,"Si"]))
+# Métricas comparativas
+metrics_compare <- rbind(
+  data.frame(
+    Modelo = "Sin pesos",
+    Métrica = c("Accuracy", "Sensitivity", "Specificity", "AUC"),
+    Valor = c(
+      confusionMatrix(predictions_unw, test_data$elite)$overall["Accuracy"],
+      confusionMatrix(predictions_unw, test_data$elite)$byClass["Sensitivity"],
+      confusionMatrix(predictions_unw, test_data$elite)$byClass["Specificity"],
+      auc(roc(as.numeric(test_data$elite == "Si"), pred_probs_unw[,"Si"]))
+    )
+  ),
+  data.frame(
+    Modelo = "Con pesos",
+    Métrica = c("Accuracy", "Sensitivity", "Specificity", "AUC"),
+    Valor = c(
+      confusionMatrix(factor(pred_probs_w > 0.5, levels=c(FALSE, TRUE), 
+                           labels=c("No", "Si")), test_data$elite)$overall["Accuracy"],
+      confusionMatrix(factor(pred_probs_w > 0.5, levels=c(FALSE, TRUE), 
+                           labels=c("No", "Si")), test_data$elite)$byClass["Sensitivity"],
+      confusionMatrix(factor(pred_probs_w > 0.5, levels=c(FALSE, TRUE), 
+                           labels=c("No", "Si")), test_data$elite)$byClass["Specificity"],
+      auc(roc(as.numeric(test_data$elite == "Si"), pred_probs_w))
+    )
   )
 )
 
-kable(metrics,
-      caption = "Métricas de rendimiento del modelo",
-      digits = 3) %>%
+kbl(metrics_compare,
+    caption = "Métricas de rendimiento comparativas",
+    digits = 3) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
-
-# Curva ROC
-roc_obj <- roc(as.numeric(test_data$elite == "Si"), pred_probs[,"Si"])
-ggroc(roc_obj) +
-  theme_minimal() +
-  ggtitle(paste("Curva ROC (AUC =", round(auc(roc_obj), 3), ")")) +
-  geom_abline(intercept = 1, slope = 1, linetype = "dashed", alpha = 0.8)
-
-# Importancia de variables
-var_imp <- vip(rf_model)
 ```
 
-Este análisis sugiere que la pertenencia al 10% superior en Chile está fuertemente estructurada por la combinación de educación y territorio, con la edad jugando un rol moderador. Los errores del modelo iluminan casos donde esta estructura se rompe, sea por rutas alternativas de acceso a altos ingresos (regiones mineras) o por barreras que impiden que el capital educativo se traduzca en retornos económicos equiparables (RM).
+Este análisis sugiere que la pertenencia al 10% superior en Chile está fuertemente estructurada por la combinación de educación y territorio, con la edad jugando un rol moderador. Los errores del modelo iluminan casos donde esta estructura se rompe, sea por rutas alternativas de acceso a altos ingresos (regiones mineras) o por barreras que impiden que el capital educativo se traduzca en retornos económicos equiparables (RM). Además, un dato importante es que parece ser que los pesos disminiyen la specificity considerablemente, probablemente por la subestimación de la RM en la muestra y los falsos negativos y positivos concentrados en esa región.
 
 Variables de bienestar:
 Muestran una importancia moderada pero reveladora en el modelo. El logro de metas y el apoyo a la empleabilidad emergen como los predictores más importantes. La interferencia doméstica y el balance trabajo-vida muestran una importancia menor pero significativa. El indicador de missing en variables de bienestar resultó ser en sí mismo predictivo
@@ -1573,37 +1559,30 @@ El indicador bienestar_missing está en realidad capturando principalmente situa
 Su poder predictivo (que resultó significativo) probablemente refleja que la pertenencia al 10% superior está fuertemente asociada a la participación en el mercado laboral.
 
 ```{r error_analysis}
+# Análisis de errores
 results_df <- data.frame(
-  actual = test_data$elite,
-  predicted = predictions,
-  prob_elite = pred_probs[,"Si"],
-  id = 1:nrow(test_data)
+ actual = test_data$elite,
+ predicted = predictions_unw,
+ prob_elite = pred_probs_unw[,"Si"],
+ id = 1:nrow(test_data)
 )
 
-# Analizar falsos positivos y negativos
+# Crear error_summary primero
 error_analysis <- results_df %>%
-  mutate(
-    error_type = case_when(
-      actual == "Si" & predicted == "No" ~ "Falso Negativo",
-      actual == "No" & predicted == "Si" ~ "Falso Positivo",
-      TRUE ~ "Correcto"
-    )
-  )
+ mutate(
+   error_type = case_when(
+     actual == "Si" & predicted == "No" ~ "Falso Negativo",
+     actual == "No" & predicted == "Si" ~ "Falso Positivo",
+     TRUE ~ "Correcto"
+   )
+ )
 
-# Crear resumen de errores
 error_summary <- error_analysis %>%
-  group_by(error_type) %>%
-  summarise(
-    count = n(),
-    percentage = n()/nrow(error_analysis) * 100
-  )
-
-# Mostrar resumen de errores con kable
-kable(error_summary,
-      caption = "Resumen de errores de clasificación",
-      col.names = c("Tipo de error", "Cantidad", "Porcentaje"),
-      digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+ group_by(error_type) %>%
+ summarise(
+   count = n(),
+   percentage = n()/nrow(error_analysis) * 100
+ )
 
 # Análisis por región
 error_by_region <- error_analysis %>%
@@ -1620,13 +1599,19 @@ error_by_region <- error_analysis %>%
              values_from = count, 
              values_fill = 0)
 
-# Mostrar distribución de errores por región 
+# Tablas de resultados
+kable(error_summary,
+     caption = "Resumen de errores de clasificación",
+     col.names = c("Tipo de error", "Cantidad", "Porcentaje"),
+     digits = 2) %>%
+ kable_styling(bootstrap_options = c("striped", "hover"))
+
 kable(error_by_region,
      caption = "Distribución de errores por región",
      col.names = c("Región", "Correcto", "Falso Negativo", "Falso Positivo")) %>%
  kable_styling(bootstrap_options = c("striped", "hover"))
 
-# Visualización de distribución de errores
+# Visualización
 ggplot(error_analysis, aes(x = prob_elite, fill = error_type)) +
  geom_histogram(bins = 30, alpha = 0.7) +
  facet_wrap(~error_type, scales = "free_y") +
