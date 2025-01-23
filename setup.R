@@ -4,7 +4,11 @@ pacman::p_load(
   dplyr,      # Manipulación de datos
   ggplot2,    # Visualización
   scales,     # Formateo de escalas
-  kableExtra  # Tablas formateadas
+  kableExtra,  # Tablas formateadas
+  purrr,       # Visualizaciones
+  chilemapas,
+  sf,
+  viridis
 )
 
 # Rutas relativas a los datos

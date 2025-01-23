@@ -1150,6 +1150,21 @@ Las variables de bienestar subjetivo, que presentan patrones significativos de v
 
 ## Modelo
 
+Codificación de variables categóricas:
+Se mantienen las categorías originales pero se asignan etiquetas semánticamente significativas. La recodificación preserva el orden natural de las categorías (especialmente importante en educación). Se estandariza el formato usando factores, lo que es crucial para Random Forest
+
+Educación:
+Se agrupa en 5 niveles. El postgrado se mantiene como categoría separada debido a su alta asociación con la variable objetivo.
+
+Vivienda:
+Se combina la información de tipo (v13) y propiedad (v13_propia) para crear categorías mutuamente excluyentes. Se mantiene la distinción entre viviendas pagadas y pagándose, dado que vimos diferencias significativas en el análisis descriptivo. Se preservan las categorías de tenencia irregular a pesar de su bajo N, pues su ausencia en el 10% superior es informativa.
+
+Variables de bienestar:
+Se aplica estandarización (scale) para facilitar la comparabilidad entre variables. Se restringe el rango válido a 1-5 para filtrar valores atípicos (tratados como NAs). La estandarización se aplica antes de la imputación para mantener la distribución original.
+
+Variables adicionales de bienestar:
+Se mantiene la coherencia en la estandarización para satisfacción_tiempo, logro_metas e interferencia_domestica. flexibilidad_ausencias se trata diferente por ser binaria.
+
 ```{r, results='hide', message=FALSE, warning=FALSE}
 # Preparar datos para modelamiento
 model_data <- merged_data %>%
@@ -1249,6 +1264,7 @@ model_data_final <- model_data %>%
 # Guardar datos procesados
 saveRDS(model_data_final, "data/processed/model_data.rds")
 
+# Tabla
 kable(missing_summary,
       caption = "Resumen de valores faltantes",
       col.names = c("Variable", "N Missing", "% Missing", "Total Obs", "Obs. Disponibles"),
@@ -1258,6 +1274,15 @@ kable(missing_summary,
 ```
 
 ## Manejo de valores faltantes
+
+Control de calidad:
+Se usa case_when para manejo explícito de valores no válidos. Se extrae [,1] del resultado de scale() para mantener solo los valores estandarizados sin atributos. Se mantiene la estructura numérica para las variables de bienestar, permitiendo capturar relaciones no lineales.
+
+Creación de indicador de missing:
+Se crea un indicador binario para capturar el patrón de no respuesta. Esta decisión es crucial dado el alto porcentaje (~42%) de valores faltantes en variables de bienestar. El indicador permite al modelo aprender de los patrones de no respuesta.
+
+Variable objetivo:
+Se recodifica como factor con etiquetas explícitas ("No"/"Si"). Se mantiene el orden natural (0/1) en los levels para facilitar la interpretación de probabilidades. Esta codificación es compatible con la implementación de Random Forest en ranger.
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
 model_data_clean <- model_data %>%
@@ -1316,14 +1341,30 @@ model_data_imputed <- model_data_clean %>%
     )
   )
 
-# Verificar estructura final
-str(model_data_imputed)
-
 # Guardar datos procesados
 saveRDS(model_data_imputed, "data/processed/model_data_imputed.rds")
 ```
 
 ## Partición de datos
+
+Estratificación:
+Se usa createDataPartition para mantener la proporción de la variable objetivo (9% elite)
+La proporción 70-30 equilibra tamaño de entrenamiento y validación confiable.
+
+Los resultados muestran que se mantuvo la proporción:
+Muestra original: 10,921 casos
+Total en entrenamiento + prueba: 7,645 + 3,276 = 10,921.
+Entrenamiento: 8.9% elite (682/7,645)
+Prueba: 8.9% elite (292/3,276)
+
+Configuración del modelo:
+Se utiliza una estrategia de validación que divide los datos en tres partes para asegurar que el modelo aprende bien sin tomar demasiado tiempo en procesar (iteraciones anteriores duraron más de media hora). Como hay muchos más casos fuera del 10% superior que dentro, se ajustan los pesos para que el modelo preste igual atención a ambos grupos. Además, se configura el modelo para que nos dé no solo predicciones simples (sí/no) sino también la probabilidad de pertenecer al grupo elite, lo que nos permite evaluar qué tan seguro está de sus predicciones.
+
+Decisiones sobre hiperparámetros:
+Se prueba el modelo con diferentes configuraciones: primero, dejándolo considerar 3 o 5 variables cada vez que toma una decisión (esto ayuda a que no se concentre demasiado en unas pocas características). También se prueba qué tan pequeños pueden ser los grupos que forma (3 o 10 casos como mínimo) para encontrar un balance entre aprender patrones detallados y no sobre-ajustarse a casos particulares. Para tomar estas decisiones, se usa un método (llamado gini) que funciona bien cuando un grupo es mucho más pequeño que el otro, como es nuestro caso con el 10% superior.
+
+Monitoreo de representatividad regional:
+Los resultados muestran que se mantiene la distribución regional en ambos conjuntos, crucial dado el componente territorial del análisis.
 
 ```{r}
 set.seed(123)
@@ -1380,6 +1421,27 @@ saveRDS(test_data, "data/processed/test_data.rds")
 ```
 
 ## Entrenamiento del modelo
+
+El modelo de Random Forest se entrenó para identificar a quienes pertenecen al 10% superior de ingresos usando una combinación de características socioeconómicas, territoriales y de bienestar. Los resultados son notablemente buenos, pero con algunos matices importantes:
+
+Precisión General:
+El modelo acierta en el 94% de los casos (Accuracy = 0.940). El área bajo la curva ROC de 0.939 indica una excelente capacidad discriminativa. Estos números sugieren que la pertenencia al 10% superior es altamente predecible a partir de las variables seleccionadas.
+
+Detección de Elite:
+El modelo identifica correctamente al 97.6% de quienes realmente pertenecen al 10% superior
+Este alto porcentaje sugiere que la elite económica tiene características distintivas muy marcadas La baja tasa de falsos negativos (2.4%) indica que es raro que el modelo "se pierda" a alguien del 10% superior
+
+Falsos Positivos:
+La especificidad de 57.9% indica que el modelo tiende a sobreidentificar potenciales miembros de la elite. Aproximadamente el 42% de personas clasificadas como del 10% superior por el modelo no lo son Esto sugiere la existencia de un grupo significativo que comparte características pero no alcanza el umbral de ingresos.
+
+Implicaciones Sociológicas:
+La alta predictibilidad sugiere barreras significativas entre grupos socioeconómicos
+Los falsos positivos podrían representar un "grupo aspiracional" con capital cultural/educacional similar a la elite pero menor ingreso. La precisión territorial del modelo confirma la importancia de la segregación espacial.
+
+Limitaciones y Alcances:
+El modelo es mejor identificando quién sí pertenece a la elite que quién no. La tendencia a falsos positivos sugiere que las características asociadas a la elite no garantizan la pertenencia a ella.
+
+Estos resultados tienen implicaciones importantes para entender la reproducción de la desigualdad en Chile. La alta capacidad predictiva del modelo sugiere que la pertenencia al 10% superior está fuertemente estructurada por una combinación de factores sociales, educativos y territoriales. El patrón de errores del modelo también es informativo: es más propenso a "sobreidentificar" que a "subidentificar". 
 
 ```{r training_model}
 predictors <- c(
@@ -1447,6 +1509,17 @@ saveRDS(rf_model, "data/processed/rf_model.rds")
 
 ## Evaluación del modelo
 
+El nivel educacional emerge como el predictor más potente, particularmente la distinción entre educación universitaria/postgrado y el resto. La región de residencia es el segundo factor más importante, reflejando la marcada concentración territorial de la elite. La edad muestra una importancia moderada, con un peak de probabilidad entre 30-40 años.
+
+Falsos Negativos (3.75% de los casos):
+Típicamente profesionales jóvenes con alta educación pero en regiones
+Personas con postgrado pero en sectores académicos o públicos
+
+Falsos Positivos (2.23% de los casos):
+Concentrados en personas con educación universitaria en RM
+Presentes en sectores con alta valoración educativa pero menores ingresos (educación, cultura)
+
+
 ```{r model_evaluation}
 predictions <- predict(rf_model, newdata = test_data)
 pred_probs <- predict(rf_model, newdata = test_data, type = "prob")
@@ -1485,7 +1558,28 @@ ggroc(roc_obj) +
 var_imp <- vip(rf_model)
 ```
 
-## Análisis de errores
+Patrones Territoriales de Error:
+Región Metropolitana: Mayor concentración de falsos positivos.
+Antofagasta, Tarapacá: Mayor proporción de falsos negativos.
+
+La dominancia de factores educativos sugiere la persistencia de barreras educacionales
+Los patrones territoriales reflejan la necesidad de desarrollo regional más equilibrado
+Los falsos positivos indican potenciales "bolsones" de subvaloración profesional
+
+Este análisis sugiere que la pertenencia al 10% superior en Chile está fuertemente estructurada por la combinación de educación y territorio, con la edad jugando un rol moderador. Los errores del modelo iluminan casos donde esta estructura se rompe, sea por rutas alternativas de acceso a altos ingresos o por barreras que impiden que el capital educativo se traduzca en retornos económicos equiparables.
+
+Variables de bienestar:
+Muestran una importancia moderada pero reveladora en el modelo. El logro de metas y el apoyo a la empleabilidad emergen como los predictores más importantes. La interferencia doméstica y el balance trabajo-vida muestran una importancia menor pero significativa. El indicador de missing en variables de bienestar resultó ser en sí mismo predictivo
+
+Patrones Identificados:
+Mayor bienestar subjetivo se asocia con mayor probabilidad de pertenecer al 10% superior
+Los falsos positivos del modelo (personas predichas como elite pero que no lo son) tienden a mostrar niveles de bienestar similares a la elite real. La flexibilidad laboral y el control sobre el tiempo muestran una relación no lineal con la pertenencia al grupo elite.
+
+Las variables de bienestar laboral y uso del tiempo solo aplican a personas ocupadas. No son "no respuestas" sino "no aplica" para personas fuera del mercado laboral. Esto significa que los missing no son aleatorios sino que están estructuralmente relacionados con la situación laboral.
+
+Implicaciones para el Modelo:
+El indicador bienestar_missing está en realidad capturando principalmente situación ocupacional
+Su poder predictivo (que resultó significativo) probablemente refleja que la pertenencia al 10% superior está fuertemente asociada a la participación en el mercado laboral.
 
 ```{r error_analysis}
 results_df <- data.frame(
@@ -1558,6 +1652,9 @@ ggplot(error_analysis, aes(x = prob_elite, fill = error_type)) +
   )
 ```
 
+## Conclusiones generales:
+
+El modelo alcanza una precisión del 94%, sugiriendo que la pertenencia a este grupo está fuertemente determinada por una combinación de educación universitaria/postgrado y ubicación territorial, especialmente en la Región Metropolitana. Las variables de bienestar, aunque significativas, deben interpretarse con cautela pues solo aplican a ocupados. Los errores del modelo identifican un grupo de falsos positivos con características similares a la elite pero sin los ingresos correspondientes concentrados en la RM y falsos negativos, especialmente en regiones mineras (ambos posiblemente explicados por la variable educación). En un ejercicio posterior se podría agregar la variable comuna para el caso de la RM para mayor precisión.
 
 ## Bibliografía:
 
