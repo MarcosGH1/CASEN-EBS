@@ -1,0 +1,28 @@
+\contentsline {subsection}{Abstract}{2}{section*.2}%
+\contentsline {subsection}{Objetivos}{2}{section*.3}%
+\contentsline {subsubsection}{Objetivo General}{2}{section*.4}%
+\contentsline {subsubsection}{Objetivos Específicos}{2}{section*.5}%
+\contentsline {subsection}{Preparación y descripción de los datos}{2}{section*.6}%
+\contentsline {subsection}{Carga y preparación inicial de datos}{2}{section*.7}%
+\contentsline {subsubsection}{Representatividad y factores de expansión:}{3}{section*.8}%
+\contentsline {subsection}{Modelo Entidad-Relación}{5}{section*.9}%
+\contentsline {subsection}{Análisis descriptivo inicial}{8}{section*.10}%
+\contentsline {subsection}{Visualización de la distribución por deciles}{11}{section*.11}%
+\contentsline {subsection}{Caracterización del 10\% superior vs resto de la población}{12}{section*.12}%
+\contentsline {subsection}{Análisis territorial}{13}{section*.13}%
+\contentsline {subsection}{Visualización espacial}{16}{section*.14}%
+\contentsline {subsection}{Sexo jefe/a de hogar}{19}{section*.15}%
+\contentsline {subsection}{Edad}{21}{section*.16}%
+\contentsline {subsection}{Nivel educacional}{22}{section*.17}%
+\contentsline {subsection}{Resumen variables potencialmente predictoras}{23}{section*.18}%
+\contentsline {subsection}{Variables potenciales}{25}{section*.19}%
+\contentsline {subsection}{Variables de bienestar de EBS}{28}{section*.20}%
+\contentsline {subsection}{Tratamiento de missing values en variables de bienestar}{30}{section*.21}%
+\contentsline {subsection}{Propuesta de modelo de Machine Learning}{31}{section*.22}%
+\contentsline {subsection}{Modelo}{31}{section*.23}%
+\contentsline {subsection}{Manejo de valores faltantes}{34}{section*.24}%
+\contentsline {subsection}{Partición de datos}{36}{section*.25}%
+\contentsline {subsection}{Entrenamiento del modelo}{39}{section*.26}%
+\contentsline {subsection}{Evaluación del modelo}{41}{section*.27}%
+\contentsline {subsection}{Conclusiones generales:}{46}{section*.28}%
+\contentsline {subsection}{Bibliografía:}{46}{section*.29}%
